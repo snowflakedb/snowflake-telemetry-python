@@ -1,11 +1,11 @@
 # point_of_contact: the owner of this repository, can be a GitHub user or GitHub team
-point_of_contact: <user or github team> 
+point_of_contact: @snowflakedb/telemetry
 
 # production: whether this repository meets the criteria for being "production", see https://snowflakecomputing.atlassian.net/wiki/spaces/CLO/pages/2239988967/Production+Repository+Criteria for criteria
 production: true
 
 # distributed: whether any source code in this repository is distributed directly to customers (e.g. driver and frontend software)
-distributed: false
+distributed: true
 
 # modified: whether any open source dependencies in this repository have been modified 
 modified: false
@@ -25,4 +25,4 @@ jira_project_issue_type: Bug
 
 
 # jira_area: the jira area that raised issues should use
-jira_area: Orphaned
+jira_area: Data Platform: Data Pipelines
