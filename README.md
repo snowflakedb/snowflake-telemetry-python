@@ -7,6 +7,8 @@
 
 `snowflake-telemetry-python` is a package that supports emitting telemetry data from Python UDFs, UDTFs, and Stored Procedures.
 
+The package is a stub for the full functionality when running in Snowflake.
+
 ## Getting started
 
 To install this package, run

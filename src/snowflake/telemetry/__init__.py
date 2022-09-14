@@ -22,8 +22,14 @@ def add_event(
             name: str,
             attributes: types.Attributes = None,
         ) -> None:
-    """Add an event to the Snowflake auto-instrumented span."""
+    """Add an event to the Snowflake auto-instrumented span.
+
+    This is a stub for the full functionality when running in Snowflake.
+    """
 
 
 def set_span_attribute(key: str, value: types.AttributeValue) -> None:
-    """Set an attribute to the Snowflake auto-instrumented span."""
+    """Set an attribute to the Snowflake auto-instrumented span.
+
+    This is a stub for the full functionality when running in Snowflake.
+    """
