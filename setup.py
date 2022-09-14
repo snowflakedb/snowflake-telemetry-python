@@ -2,7 +2,6 @@ import os
 from setuptools import setup
 
 
-VERSION = '0.0.0'
 DESCRIPTION = 'Snowflake Telemetry Python'
 LONG_DESCRIPTION = 'This package provides a set of telemetry APIs for use in Snowflake'
 SNOWFLAKE_TELEMETRY_SRC_DIR = os.path.join("src", "snowflake", "telemetry")
