@@ -1,0 +1,4 @@
+point_of_contact: @snowflakedb/telemetry
+production: true
+code_owners_file_present: true
+jira_area: Data Platform: Data Pipelines
