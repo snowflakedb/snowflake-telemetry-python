@@ -11,15 +11,27 @@ The package is a stub for the full functionality when running in Snowflake.
 
 ## Getting started
 
-To install this package, run
+To install the latest release of this package as an end user, run
 
 ```bash
-$ git clone git@github.com:snowflakedb/snowflake-telemetry-python.git
-$ cd snowflake-telemetry-python
-
-$ python3 -m venv venv
-$ source venv/bin/activate
-$ pip install --upgrade pip
-$ pip install .
+VERSION="0.2.0"
+curl -L "https://github.com/snowflakedb/snowflake-telemetry-python/archive/refs/tags/v${VERSION}.tar.gz" > "snowflake-telemetry-python-${VERSION}.tar.gz"
+tar -xvf "snowflake-telemetry-python-${VERSION}.tar.gz"
+cd "snowflake-telemetry-python-${VERSION}"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install .
 ```
 
+To develop this package, run
+
+```bash
+git clone git@github.com:snowflakedb/snowflake-telemetry-python.git
+cd snowflake-telemetry-python
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install . ./tests/snowflake-telemetry-test-utils
+```
