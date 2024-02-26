@@ -2,13 +2,12 @@
 # Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
 #
 
-from logging import LogRecord
 from typing import Sequence
 
 from opentelemetry.exporter.otlp.proto.http._log_exporter import encoder
 from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import ExportLogsServiceRequest
 from opentelemetry.proto.logs.v1.logs_pb2 import LogsData
-from snowflake.telemetry._internal.sdk.logs import LogData
+from opentelemetry.sdk._logs import LogData
 
 
 def _encode_logs(batch: Sequence[LogData]) -> ExportLogsServiceRequest:

@@ -50,7 +50,7 @@ from opentelemetry.sdk.resources import Resource as SDKResource
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import TraceFlags
 
-@pytest.mark.skip(reason="we are currently re-evaluating the implementation of log_encoder")
+
 class TestOTLPLogEncoder(unittest.TestCase):
     def test_encode(self):
         sdk_logs, expected_encoding = self.get_test_logs()
