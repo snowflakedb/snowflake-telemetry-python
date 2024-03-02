@@ -3,7 +3,7 @@ package:
     version: "0.2.1.dev"
 
 source:
-    path: /tmp/anaconda_workspace/src
+    path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
 
 requirements:
     build:
@@ -18,6 +18,5 @@ requirements:
 about:
     home: https://www.snowflake.com/
     license: Apache 2.0
-    license_file: /tmp/anaconda_workspace/src/LICENSE.txt
-    summary: Snowflake Telemetry Python package 
-
+    license_file: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}/LICENSE.txt
+    summary: Snowflake Telemetry Python package
