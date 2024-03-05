@@ -2,44 +2,78 @@
 # Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
 #
 
+"""
+This module allows the user to write traces serialized as protobuf messages to
+the preferred location by implementing the write_span() abstract method. The
+only classes that should be accessed outside of this module are:
+
+- SpanWriter
+- ProtoSpanExporter
+
+Please see the class documentation for those classes to learn more.
+"""
+
 import abc
-import enum
 import typing
 
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import (
     SpanExportResult,
     SpanExporter,
 )
 from snowflake.telemetry._internal.encoder.otlp.proto.common.trace_encoder import (
-    serialize_traces_data,
+    _encode_spans,
 )
 
 
-class SpanWriterResult(enum.Enum):
-    SUCCESS = 0
-    FAILURE = 1
-
-
-# SpanWriter abstract class with one abstract method that can be overwritten:
+# pylint: disable=too-few-public-methods
 class SpanWriter(abc.ABC):
-
+    """
+    SpanWriter abstract base class with one abstract method that must be
+    implemented by the user.
+    """
     @abc.abstractmethod
-    def write_span(self, serialized_spans: bytes) -> SpanWriterResult:
-        """quick"""
+    def write_span(self, serialized_spans: bytes) -> None:
+        """
+        Implement this method to write the serialized protobuf message to your
+        preferred location.
+        """
 
 
 class ProtoSpanExporter(SpanExporter):
+    """
+    Implementation of the SpanExporter interface for exporting spans.
+
+    This implementation writes serialized
+    opentelemetry.proto.trace.v1.trace_pb2.TracesData protobuf messages
+    according to the implementation you provide to the SpanWriter abstract base
+    class above.
+    """
     def __init__(self, span_writer: SpanWriter):
+        super().__init__()
         self.span_writer = span_writer
-    
+
     def export(
         self, spans: typing.Sequence[ReadableSpan]
     ) -> "SpanExportResult":
-        result = self.span_writer.write_span(serialize_traces_data(spans))
-        if result == SpanWriterResult.FAILURE:
+        try:
+            self.span_writer.write_span(
+                ProtoSpanExporter._serialize_traces_data(spans)
+            )
+            return SpanExportResult.SUCCESS
+        except Exception:
             return SpanExportResult.FAILURE
-        return SpanExportResult.SUCCESS
+
+    @staticmethod
+    def _serialize_traces_data(
+        sdk_spans: typing.Sequence[ReadableSpan],
+    ) -> bytes:
+        # pylint gets confused by protobuf-generated code, that's why we must
+        # disable the no-member check below.
+        return TracesData(
+            resource_spans=_encode_spans(sdk_spans).resource_spans # pylint: disable=no-member
+        ).SerializeToString()
 
     def shutdown(self) -> None:
         pass
@@ -47,6 +81,5 @@ class ProtoSpanExporter(SpanExporter):
 
 __all__ = [
     "SpanWriter",
-    "SpanWriterResult",
     "ProtoSpanExporter",
 ]

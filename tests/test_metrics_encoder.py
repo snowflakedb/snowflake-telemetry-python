@@ -17,7 +17,9 @@ import unittest
 
 from snowflake.telemetry._internal.encoder.otlp.proto.common.metrics_encoder import (
     _encode_metrics,
-    serialize_metrics_data,
+)
+from snowflake.telemetry._internal.exporter.otlp.proto.metrics_exporter import (
+    ProtoMetricExporter,
 )
 from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import (
     ExportMetricsServiceRequest,
@@ -149,7 +151,7 @@ class TestOTLPMetricsEncoder(unittest.TestCase):
         actual = _encode_metrics(metrics_data)
         self.assertEqual(expected, actual)
         self.assertEqual(pb2.MetricsData(resource_metrics=actual.resource_metrics).SerializeToString(),
-                         serialize_metrics_data(metrics_data))
+                         ProtoMetricExporter._serialize_metrics_data(metrics_data))
 
     def test_encode_sum_double(self):
         metrics_data = MetricsData(
@@ -230,7 +232,7 @@ class TestOTLPMetricsEncoder(unittest.TestCase):
         actual = _encode_metrics(metrics_data)
         self.assertEqual(expected, actual)
         self.assertEqual(pb2.MetricsData(resource_metrics=actual.resource_metrics).SerializeToString(),
-                         serialize_metrics_data(metrics_data))
+                         ProtoMetricExporter._serialize_metrics_data(metrics_data))
 
     def test_encode_gauge_int(self):
         metrics_data = MetricsData(
@@ -308,7 +310,7 @@ class TestOTLPMetricsEncoder(unittest.TestCase):
         actual = _encode_metrics(metrics_data)
         self.assertEqual(expected, actual)
         self.assertEqual(pb2.MetricsData(resource_metrics=actual.resource_metrics).SerializeToString(),
-                         serialize_metrics_data(metrics_data))
+                         ProtoMetricExporter._serialize_metrics_data(metrics_data))
 
     def test_encode_gauge_double(self):
         metrics_data = MetricsData(
@@ -386,7 +388,7 @@ class TestOTLPMetricsEncoder(unittest.TestCase):
         actual = _encode_metrics(metrics_data)
         self.assertEqual(expected, actual)
         self.assertEqual(pb2.MetricsData(resource_metrics=actual.resource_metrics).SerializeToString(),
-                         serialize_metrics_data(metrics_data))
+                         ProtoMetricExporter._serialize_metrics_data(metrics_data))
 
     def test_encode_histogram(self):
         metrics_data = MetricsData(
@@ -472,7 +474,7 @@ class TestOTLPMetricsEncoder(unittest.TestCase):
         actual = _encode_metrics(metrics_data)
         self.assertEqual(expected, actual)
         self.assertEqual(pb2.MetricsData(resource_metrics=actual.resource_metrics).SerializeToString(),
-                         serialize_metrics_data(metrics_data))
+                         ProtoMetricExporter._serialize_metrics_data(metrics_data))
 
     def test_encode_multiple_scope_histogram(self):
         metrics_data = MetricsData(
@@ -695,4 +697,4 @@ class TestOTLPMetricsEncoder(unittest.TestCase):
         actual = _encode_metrics(metrics_data)
         self.assertEqual(expected, actual)
         self.assertEqual(pb2.MetricsData(resource_metrics=actual.resource_metrics).SerializeToString(),
-                         serialize_metrics_data(metrics_data))
+                         ProtoMetricExporter._serialize_metrics_data(metrics_data))
