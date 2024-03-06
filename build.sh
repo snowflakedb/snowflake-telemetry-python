@@ -39,7 +39,7 @@ conda config --add channels https://repo.anaconda.com/pkgs/snowflake/
 
 # clean up the dist directory
 rm -rf ./anaconda/dist
-mkdir ./anaconda/dist
+mkdir -p ./anaconda/dist
 
 if [ "$BUILD_CONDA_FORMAT" = true ] ; then
   # NOTE: the below is to output the build in .conda format.
