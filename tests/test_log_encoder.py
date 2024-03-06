@@ -25,7 +25,9 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter.encoder import (
 )
 from snowflake.telemetry._internal.encoder.otlp.proto.common.log_encoder import (
     _encode_logs,
-    serialize_logs_data,
+)
+from snowflake.telemetry._internal.exporter.otlp.proto.log_exporter import (
+    _ProtoLogExporter,
 )
 from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import (
     ExportLogsServiceRequest,
@@ -50,7 +52,7 @@ from opentelemetry.sdk.resources import Resource as SDKResource
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import TraceFlags
 
-@pytest.mark.skip(reason="we are currently re-evaluating the implementation of log_encoder")
+
 class TestOTLPLogEncoder(unittest.TestCase):
     def test_encode(self):
         sdk_logs, expected_encoding = self.get_test_logs()
@@ -58,8 +60,8 @@ class TestOTLPLogEncoder(unittest.TestCase):
 
     def test_serialize_logs_data(self):
         sdk_logs, expected_encoding = self.get_test_logs()
-        self.assertIsInstance(serialize_logs_data(sdk_logs), bytes)
-        self.assertEqual(serialize_logs_data(sdk_logs),
+        self.assertIsInstance(_ProtoLogExporter._serialize_logs_data(sdk_logs), bytes)
+        self.assertEqual(_ProtoLogExporter._serialize_logs_data(sdk_logs),
                          PB2LogsData(resource_logs=expected_encoding.resource_logs).SerializeToString())
 
     @staticmethod
