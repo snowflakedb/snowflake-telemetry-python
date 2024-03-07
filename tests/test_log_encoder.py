@@ -26,7 +26,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter.encoder import (
 from snowflake.telemetry._internal.encoder.otlp.proto.common.log_encoder import (
     _encode_logs,
 )
-from snowflake.telemetry._internal.exporter.otlp.proto.log_exporter import (
+from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
     _ProtoLogExporter,
 )
 from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import (

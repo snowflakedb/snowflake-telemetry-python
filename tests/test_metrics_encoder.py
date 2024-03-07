@@ -18,7 +18,7 @@ import unittest
 from snowflake.telemetry._internal.encoder.otlp.proto.common.metrics_encoder import (
     _encode_metrics,
 )
-from snowflake.telemetry._internal.exporter.otlp.proto.metrics_exporter import (
+from snowflake.telemetry._internal.exporter.otlp.proto.metrics import (
     ProtoMetricExporter,
 )
 from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import (
