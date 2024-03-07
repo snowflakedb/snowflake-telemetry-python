@@ -13,7 +13,7 @@ from opentelemetry.proto.logs.v1.logs_pb2 import (
     SEVERITY_NUMBER_ERROR,
     SEVERITY_NUMBER_FATAL,
 )
-from snowflake.telemetry._internal.exporter.otlp.proto.log_exporter import (
+from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
     LogWriter,
     SnowflakeLoggingHandler,
 )
