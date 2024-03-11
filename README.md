@@ -12,7 +12,7 @@
 To install the latest release of this package as an end user, run
 
 ```bash
-VERSION="0.2.0"
+VERSION="0.3.0"
 curl -L "https://github.com/snowflakedb/snowflake-telemetry-python/archive/refs/tags/v${VERSION}.tar.gz" > "snowflake-telemetry-python-${VERSION}.tar.gz"
 tar -xvf "snowflake-telemetry-python-${VERSION}.tar.gz"
 cd "snowflake-telemetry-python-${VERSION}"
