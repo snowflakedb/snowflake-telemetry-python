@@ -1,6 +1,6 @@
 package:
     name: snowflake_telemetry_python
-    version: "0.2.1.dev"
+    version: "0.3.0.dev"
 
 source:
     path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
