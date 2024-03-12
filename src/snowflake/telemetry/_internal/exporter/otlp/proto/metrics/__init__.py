@@ -17,15 +17,15 @@ import abc
 from typing import Dict
 
 import opentelemetry
+from opentelemetry.exporter.otlp.proto.common.metrics_encoder import (
+    encode_metrics,
+)
 from opentelemetry.proto.metrics.v1.metrics_pb2 import MetricsData as PB2MetricsData
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
     MetricExportResult,
     MetricExporter,
     MetricsData,
-)
-from snowflake.telemetry._internal.encoder.otlp.proto.common.metrics_encoder import (
-    _encode_metrics,
 )
 
 
@@ -39,7 +39,8 @@ class MetricWriter(abc.ABC):
     def write_metrics(self, serialized_metrics: bytes) -> None:
         """
         Implement this method to write the serialized protobuf message to your
-        preferred location.
+        preferred location. For an example implementation, see
+        InMemoryMetricWriter in the tests folder.
         """
 
 
@@ -82,7 +83,7 @@ class ProtoMetricExporter(MetricExporter):
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
         return PB2MetricsData(
-            resource_metrics=_encode_metrics(data).resource_metrics # pylint: disable=no-member
+            resource_metrics=encode_metrics(data).resource_metrics # pylint: disable=no-member
         ).SerializeToString()
 
     def force_flush(self, timeout_millis: float = 10_000) -> bool:

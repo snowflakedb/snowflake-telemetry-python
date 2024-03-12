@@ -22,9 +22,9 @@ setup(
     long_description=LONG_DESCRIPTION,
     install_requires=[
         "setuptools >= 40.0.0, < 66.0.0",
-        "opentelemetry-api == 1.12.0",
-        "opentelemetry-exporter-otlp == 1.12.0",
-        "opentelemetry-sdk == 1.12.0",
+        "opentelemetry-api == 1.23.0",
+        "opentelemetry-exporter-otlp-proto-common == 1.23.0",
+        "opentelemetry-sdk == 1.23.0",
     ],
     packages=find_namespace_packages(
         where='src'
