@@ -46,16 +46,16 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.log_writer = InMemoryLogWriter() # Replaced with SnowflakeLogWriter in XP
-        self.logger = logging.getLogger()
-        self.logger.addHandler(SnowflakeLoggingHandler(self.log_writer))
+        self.root_logger = logging.getLogger()
+        self.root_logger.addHandler(SnowflakeLoggingHandler(self.log_writer))
         self.this_file_name = inspect.currentframe().f_code.co_filename
 
     def test_snowflake_logging_handler_default_level_warn(self):
         self.log_writer.clear()
         # NOTSET should map to TRACE and not be emitted
-        self.logger.log(logging.NOTSET, "nothing is wrong")
-        self.logger.debug("nothing is wrong")
-        self.logger.info("nothing is wrong")
+        self.root_logger.log(logging.NOTSET, "nothing is wrong")
+        self.root_logger.debug("nothing is wrong")
+        self.root_logger.info("nothing is wrong")
         finished_protos = self.log_writer.get_finished_protos()
         # Default log level for python is warn, so there should be no protobuf
         # for the logger.info call
@@ -64,10 +64,11 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
     def test_snowflake_logging_handler_warning_level(self):
         this_method_name = inspect.currentframe().f_code.co_name
         self.log_writer.clear()
-        self.logger.warning("warning, something is wrong")
-        self.logger.warn("warn, something is wrong")
+        self.root_logger.warning("warning, something is wrong")
+        self.root_logger.warn("warn, something is wrong")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 2)
+        self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
         warning_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
             warning_log_record,
@@ -76,6 +77,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
             SEVERITY_NUMBER_WARN,
             this_method_name
         )
+        self.assertEqual(finished_protos[1].resource_logs[0].scope_logs[0].scope.name, "root")
         warn_log_record = finished_protos[1].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
             warn_log_record,
@@ -88,9 +90,10 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
     def test_snowflake_logging_handler_error_level(self):
         this_method_name = inspect.currentframe().f_code.co_name
         self.log_writer.clear()
-        self.logger.error("error, something is wrong")
+        self.root_logger.error("error, something is wrong")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 1)
+        self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
         error_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
             error_log_record,
@@ -103,13 +106,41 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
     def test_snowflake_logging_handler_critical_level(self):
         this_method_name = inspect.currentframe().f_code.co_name
         self.log_writer.clear()
-        self.logger.critical("critical, something is wrong")
+        self.root_logger.critical("critical, something is wrong")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 1)
+        self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
         fatal_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
             fatal_log_record,
             "critical, something is wrong",
+            "FATAL",
+            SEVERITY_NUMBER_FATAL,
+            this_method_name
+        )
+
+    def test_snowflake_logging_handler_scoped_logger(self):
+        this_method_name = inspect.currentframe().f_code.co_name
+        self.log_writer.clear()
+        self.root_logger.critical("critical, something is wrong at root scope")
+        local_logger = logging.getLogger("test_proto_logs_exporter")
+        local_logger.critical("critical, something is wrong at local scope")
+        finished_protos = self.log_writer.get_finished_protos()
+        self.assertEqual(len(finished_protos), 2)
+        self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
+        root_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
+        self._log_record_check_helper(
+            root_log_record,
+            "critical, something is wrong at root scope",
+            "FATAL",
+            SEVERITY_NUMBER_FATAL,
+            this_method_name
+        )
+        local_log_record = finished_protos[1].resource_logs[0].scope_logs[0].log_records[0]
+        self.assertEqual(finished_protos[1].resource_logs[0].scope_logs[0].scope.name, "test_proto_logs_exporter")
+        self._log_record_check_helper(
+            local_log_record,
+            "critical, something is wrong at local scope",
             "FATAL",
             SEVERITY_NUMBER_FATAL,
             this_method_name
