@@ -16,14 +16,14 @@ Please see the class documentation for those classes to learn more.
 import abc
 import typing
 
+from opentelemetry.exporter.otlp.proto.common.trace_encoder import (
+    encode_spans,
+)
 from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import (
     SpanExportResult,
     SpanExporter,
-)
-from snowflake.telemetry._internal.encoder.otlp.proto.common.trace_encoder import (
-    _encode_spans,
 )
 
 
@@ -37,7 +37,8 @@ class SpanWriter(abc.ABC):
     def write_span(self, serialized_spans: bytes) -> None:
         """
         Implement this method to write the serialized protobuf message to your
-        preferred location.
+        preferred location. For an example implementation, see
+        InMemorySpanWriter in the tests folder.
         """
 
 
@@ -72,7 +73,7 @@ class ProtoSpanExporter(SpanExporter):
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
         return TracesData(
-            resource_spans=_encode_spans(sdk_spans).resource_spans # pylint: disable=no-member
+            resource_spans=encode_spans(sdk_spans).resource_spans # pylint: disable=no-member
         ).SerializeToString()
 
     def shutdown(self) -> None:

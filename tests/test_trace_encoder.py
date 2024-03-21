@@ -17,18 +17,15 @@
 import unittest
 from typing import List, Tuple
 
-from opentelemetry.exporter.otlp.proto.http.trace_exporter.encoder import (
-    _SPAN_KIND_MAP,
+from opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_span_id,
-    _encode_status,
     _encode_trace_id,
 )
-from snowflake.telemetry._internal.encoder.otlp.proto.common.trace_encoder import (
-    _encode_spans,
+from opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import (
+    _SPAN_KIND_MAP,
+    _encode_status,
 )
-from snowflake.telemetry._internal.exporter.otlp.proto.traces import (
-    ProtoSpanExporter,
-)
+from opentelemetry.exporter.otlp.proto.common.trace_encoder import encode_spans
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
     ExportTraceServiceRequest as PB2ExportTraceServiceRequest,
 )
@@ -42,7 +39,7 @@ from opentelemetry.proto.resource.v1.resource_pb2 import (
 )
 from opentelemetry.proto.trace.v1.trace_pb2 import (
     ResourceSpans as PB2ResourceSpans,
-    TracesData as PB2TracesData
+    TracesData as PB2TracesData,
 )
 from opentelemetry.proto.trace.v1.trace_pb2 import ScopeSpans as PB2ScopeSpans
 from opentelemetry.proto.trace.v1.trace_pb2 import Span as PB2SPan
@@ -59,17 +56,27 @@ from opentelemetry.trace import SpanKind as SDKSpanKind
 from opentelemetry.trace import TraceFlags as SDKTraceFlags
 from opentelemetry.trace.status import Status as SDKStatus
 from opentelemetry.trace.status import StatusCode as SDKStatusCode
-
+from snowflake.telemetry._internal.exporter.otlp.proto.traces import (
+    ProtoSpanExporter,
+)
+from snowflake.telemetry.test.traces_test_utils import (
+    InMemorySpanWriter,
+)
 
 class TestOTLPTraceEncoder(unittest.TestCase):
     def test_encode_spans(self):
         otel_spans, expected_encoding = self.get_exhaustive_test_spans()
-        self.assertEqual(_encode_spans(otel_spans), expected_encoding)
+        self.assertEqual(encode_spans(otel_spans), expected_encoding)
 
-    def test_serialize_traces_data(self):
+    def test_proto_span_exporter(self):
         otel_spans, expected_encoding = self.get_exhaustive_test_spans()
-        self.assertEqual(ProtoSpanExporter._serialize_traces_data(otel_spans),
-                         PB2TracesData(resource_spans=expected_encoding.resource_spans).SerializeToString())
+        span_writer = InMemorySpanWriter()
+        exporter = ProtoSpanExporter(span_writer)
+        exporter.export(otel_spans)
+        protos = span_writer.get_finished_protos()
+        self.assertEqual(len(protos), 1)
+        self.assertEqual(protos[0],
+                         PB2TracesData(resource_spans=expected_encoding.resource_spans))
 
     @staticmethod
     def get_exhaustive_otel_span_list() -> List[SDKSpan]:
@@ -120,7 +127,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
             links=(
                 SDKLink(context=other_context, attributes={"key_bool": True}),
             ),
-            resource=SDKResource({}),
+            resource=SDKResource({}, "resource_schema_url"),
         )
         span1.start(start_time=start_times[0])
         span1.set_attribute("key_bool", False)
@@ -152,7 +159,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
             name="test-span-4",
             context=other_context,
             parent=None,
-            resource=SDKResource({}),
+            resource=SDKResource({}, "resource_schema_url"),
             instrumentation_scope=SDKInstrumentationScope(
                 name="name", version="version"
             ),
@@ -172,6 +179,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
         pb2_service_request = PB2ExportTraceServiceRequest(
             resource_spans=[
                 PB2ResourceSpans(
+                    schema_url="resource_schema_url",
                     resource=PB2Resource(),
                     scope_spans=[
                         PB2ScopeSpans(

@@ -4,42 +4,17 @@
 
 import inspect
 import logging
-import typing
 import unittest
 
 from opentelemetry.proto.logs.v1.logs_pb2 import (
-    LogsData,
     SEVERITY_NUMBER_WARN,
     SEVERITY_NUMBER_ERROR,
     SEVERITY_NUMBER_FATAL,
 )
 from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
-    LogWriter,
     SnowflakeLoggingHandler,
 )
-
-
-class InMemoryLogWriter(LogWriter):
-    """Implementation of :class:`.LogWriter` that stores protobufs in memory.
-
-    This class is intended for testing purposes. It stores the deserialized
-    protobuf messages in a list in memory that can be retrieved using the
-    :func:`.get_finished_protos` method.
-    """
-
-    def __init__(self):
-        self._protos = []
-
-    def write_logs(self, serialized_logs: bytes) -> None:
-        message = LogsData()
-        message.ParseFromString(serialized_logs)
-        self._protos.append(message)
-
-    def get_finished_protos(self) -> typing.Tuple[LogsData, ...]:
-        return tuple(self._protos)
-
-    def clear(self):
-        self._protos.clear()
+from snowflake.telemetry.test.logs_test_utils import InMemoryLogWriter
 
 
 class TestSnowflakeLoggingHandler(unittest.TestCase):
@@ -123,7 +98,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
         this_method_name = inspect.currentframe().f_code.co_name
         self.log_writer.clear()
         self.root_logger.critical("critical, something is wrong at root scope")
-        local_logger = logging.getLogger("test_proto_logs_exporter")
+        local_logger = logging.getLogger("tests")
         local_logger.critical("critical, something is wrong at local scope")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 2)
@@ -137,7 +112,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
             this_method_name
         )
         local_log_record = finished_protos[1].resource_logs[0].scope_logs[0].log_records[0]
-        self.assertEqual(finished_protos[1].resource_logs[0].scope_logs[0].scope.name, "test_proto_logs_exporter")
+        self.assertEqual(finished_protos[1].resource_logs[0].scope_logs[0].scope.name, "tests")
         self._log_record_check_helper(
             local_log_record,
             "critical, something is wrong at local scope",
@@ -166,8 +141,18 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
             self._get_attribute_string_value(log_record.attributes, 'code.function'),
             expected_method_name
         )
+        self.assertGreaterEqual(
+            self._get_attribute_int_value(log_record.attributes, 'code.lineno'),
+            0
+        )
+
 
     def _get_attribute_string_value(self, attributes, key: str) -> str:
         for attribute in attributes:
             if attribute.key == key:
                 return attribute.value.string_value
+
+    def _get_attribute_int_value(self, attributes, key: str) -> int:
+        for attribute in attributes:
+            if attribute.key == key:
+                return attribute.value.int_value

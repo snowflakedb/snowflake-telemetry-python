@@ -13,22 +13,16 @@
 # limitations under the License.
 
 import unittest
-import pytest
 from typing import List, Tuple
 
-from opentelemetry.sdk._logs import SeverityNumber
-from opentelemetry.exporter.otlp.proto.http.trace_exporter.encoder import (
+from opentelemetry._logs import SeverityNumber
+from opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_attributes,
     _encode_span_id,
     _encode_trace_id,
     _encode_value,
 )
-from snowflake.telemetry._internal.encoder.otlp.proto.common.log_encoder import (
-    _encode_logs,
-)
-from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
-    _ProtoLogExporter,
-)
+from opentelemetry.exporter.otlp.proto.common._log_encoder import encode_logs
 from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import (
     ExportLogsServiceRequest,
 )
@@ -46,23 +40,46 @@ from opentelemetry.proto.logs.v1.logs_pb2 import ScopeLogs as PB2ScopeLogs
 from opentelemetry.proto.resource.v1.resource_pb2 import (
     Resource as PB2Resource,
 )
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import LogData, LogLimits
 from opentelemetry.sdk._logs import LogRecord as SDKLogRecord
 from opentelemetry.sdk.resources import Resource as SDKResource
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import TraceFlags
+from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
+    _ProtoLogExporter,
+)
+from snowflake.telemetry.test.logs_test_utils import (
+    InMemoryLogWriter,
+)
 
 
 class TestOTLPLogEncoder(unittest.TestCase):
     def test_encode(self):
         sdk_logs, expected_encoding = self.get_test_logs()
-        self.assertEqual(_encode_logs(sdk_logs), expected_encoding)
+        self.assertEqual(encode_logs(sdk_logs), expected_encoding)
 
-    def test_serialize_logs_data(self):
+    def test_proto_log_exporter(self):
         sdk_logs, expected_encoding = self.get_test_logs()
-        self.assertIsInstance(_ProtoLogExporter._serialize_logs_data(sdk_logs), bytes)
-        self.assertEqual(_ProtoLogExporter._serialize_logs_data(sdk_logs),
-                         PB2LogsData(resource_logs=expected_encoding.resource_logs).SerializeToString())
+        log_writer = InMemoryLogWriter()
+        exporter = _ProtoLogExporter(log_writer)
+        exporter.export(sdk_logs)
+        protos = log_writer.get_finished_protos()
+        self.assertEqual(len(protos), 1)
+        self.assertEqual(protos[0],
+                         PB2LogsData(resource_logs=expected_encoding.resource_logs))
+
+    def test_dropped_attributes_count(self):
+        sdk_logs = self._get_test_logs_dropped_attributes()
+        encoded_logs = encode_logs(sdk_logs)
+        self.assertTrue(hasattr(sdk_logs[0].log_record, "dropped_attributes"))
+        self.assertEqual(
+            # pylint:disable=no-member
+            encoded_logs.resource_logs[0]
+            .scope_logs[0]
+            .log_records[0]
+            .dropped_attributes_count,
+            2,
+        )
 
     @staticmethod
     def _get_sdk_log_data() -> List[LogData]:
@@ -75,7 +92,10 @@ class TestOTLPLogEncoder(unittest.TestCase):
                 severity_text="WARN",
                 severity_number=SeverityNumber.WARN,
                 body="Do not go gentle into that good night. Rage, rage against the dying of the light",
-                resource=SDKResource({"first_resource": "value"}),
+                resource=SDKResource(
+                    {"first_resource": "value"},
+                    "resource_schema_url",
+                ),
                 attributes={"a": 1, "b": "c"},
             ),
             instrumentation_scope=InstrumentationScope(
@@ -124,7 +144,10 @@ class TestOTLPLogEncoder(unittest.TestCase):
                 severity_text="INFO",
                 severity_number=SeverityNumber.INFO,
                 body="Love is the one thing that transcends time and space",
-                resource=SDKResource({"first_resource": "value"}),
+                resource=SDKResource(
+                    {"first_resource": "value"},
+                    "resource_schema_url",
+                ),
                 attributes={"filename": "model.py", "func_name": "run_method"},
             ),
             instrumentation_scope=InstrumentationScope(
@@ -206,6 +229,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
                             ],
                         ),
                     ],
+                    schema_url="resource_schema_url",
                 ),
                 PB2ResourceLogs(
                     resource=PB2Resource(
@@ -277,7 +301,8 @@ class TestOTLPLogEncoder(unittest.TestCase):
                 severity_number=SeverityNumber.WARN,
                 body="Do not go gentle into that good night. Rage, rage against the dying of the light",
                 resource=SDKResource({"first_resource": "value"}),
-                attributes={"a": 1, "b": "c", "user_id": "B121092"}
+                attributes={"a": 1, "b": "c", "user_id": "B121092"},
+                limits=LogLimits(max_attributes=1),
             ),
             instrumentation_scope=InstrumentationScope(
                 "first_name", "first_version"

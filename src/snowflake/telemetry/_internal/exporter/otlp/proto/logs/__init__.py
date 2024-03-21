@@ -19,15 +19,16 @@ import logging.config
 import threading
 import typing
 import opentelemetry.sdk.util.instrumentation as otel_instrumentation
+import opentelemetry.sdk._logs._internal as _logs_internal
 
+from opentelemetry.exporter.otlp.proto.common._log_encoder import (
+    encode_logs,
+)
 from opentelemetry.proto.logs.v1.logs_pb2 import LogsData
 from opentelemetry.sdk import resources
 from opentelemetry.sdk._logs import export
 from opentelemetry.sdk import _logs
 from opentelemetry.util import types
-from snowflake.telemetry._internal.encoder.otlp.proto.common.log_encoder import (
-    _encode_logs,
-)
 
 
 # pylint: disable=too-few-public-methods
@@ -69,7 +70,7 @@ class _ProtoLogExporter(export.LogExporter):
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
         return LogsData(
-            resource_logs=_encode_logs(batch).resource_logs # pylint: disable=no-member
+            resource_logs=encode_logs(batch).resource_logs # pylint: disable=no-member
         ).SerializeToString()
 
     def shutdown(self):
@@ -82,19 +83,18 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
     discarded by the original implementation.
     """
 
-    _FILEPATH_ATTRIBUTE = "code.filepath"
-    _FUNCTION_NAME_ATTRIBUTE = "code.function"
     LOGGER_NAME_TEMP_ATTRIBUTE = "__snow.logging.temp.logger_name"
 
     def __init__(
             self,
             log_writer: LogWriter,
         ):
-        provider = _SnowflakeTelemetryLogEmitterProvider()
-        _logs.set_log_emitter_provider(provider)
         exporter = _ProtoLogExporter(log_writer)
-        provider.add_log_processor(export.SimpleLogProcessor(exporter))
-        super().__init__()
+        provider = _SnowflakeTelemetryLoggerProvider()
+        provider.add_log_record_processor(
+            export.SimpleLogRecordProcessor(exporter)
+        )
+        super().__init__(logger_provider=provider)
 
     @staticmethod
     def _get_snowflake_log_level_name(py_level_name):
@@ -114,17 +114,11 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
     def _get_attributes(record: logging.LogRecord) -> types.Attributes:
         attributes = _logs.LoggingHandler._get_attributes(record) # pylint: disable=protected-access
 
-        # Adding attributes that were discarded by the base class's
-        # _get_attributes() method
-        # TODO (SNOW-1210317) Remove these when upgrading to opentelemetry-python 1.23
-        attributes[SnowflakeLoggingHandler._FILEPATH_ATTRIBUTE] = record.pathname
-        attributes[SnowflakeLoggingHandler._FUNCTION_NAME_ATTRIBUTE] = record.funcName
-
         # Temporarily storing logger's name in record's attributes.
-        # This attribute will be removed by the emitter.
+        # This attribute will be removed by the logger.
         #
-        # TODO(SNOW-1210317): Upgrade to OpenTelemetry 1.20.0 or later
-        # and use OpenTelemetry's LoggerProvider.
+        # TODO (SNOW-1235374): opentelemetry-python issue #2485: Record logger
+        # name as the instrumentation scope name
         attributes[SnowflakeLoggingHandler.LOGGER_NAME_TEMP_ATTRIBUTE] = record.name
         return attributes
 
@@ -136,21 +130,22 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
         return otel_record
 
 
-class _SnowflakeTelemetryLogEmitter(_logs.LogEmitter):
+class _SnowflakeTelemetryLogger(_logs.Logger):
     """
-    A log emitter which creates an InstrumentationScope for each logger name it
-    encounters.
+    An Open Telemetry Logger which creates an InstrumentationScope for each
+    logger name it encounters.
     """
 
     def __init__(
-            self,
-            resource: resources.Resource,
-            multi_log_processor: typing.Union[
-                _logs.SynchronousMultiLogProcessor, _logs.ConcurrentMultiLogProcessor
-            ],
-            instrumentation_scope: otel_instrumentation.InstrumentationScope,
+        self,
+        resource: resources.Resource,
+        multi_log_record_processor: typing.Union[
+            _logs_internal.SynchronousMultiLogRecordProcessor,
+            _logs_internal.ConcurrentMultiLogRecordProcessor,
+        ],
+        instrumentation_scope: otel_instrumentation.InstrumentationScope,
     ):
-        super().__init__(resource, multi_log_processor, instrumentation_scope)
+        super().__init__(resource, multi_log_record_processor, instrumentation_scope)
         self._lock = threading.Lock()
         self.cached_scopes = {}
 
@@ -175,28 +170,31 @@ class _SnowflakeTelemetryLogEmitter(_logs.LogEmitter):
 
         # Emitting a record with a scope that corresponds to the logger
         # that logged it. NOT calling the superclass here for two reasons:
-        #  1. LogEmitter.emit takes a LogRecord, not LogData.
+        #  1. Logger.emit takes a LogRecord, not LogData.
         #  2. It would emit a log record with the default instrumentation scope,
         #     not with the scope we want.
         log_data = _logs.LogData(record, current_scope)
-        self._multi_log_processor.emit(log_data)
+        self._multi_log_record_processor.emit(log_data)
 
 
-class _SnowflakeTelemetryLogEmitterProvider(_logs.LogEmitterProvider):
+class _SnowflakeTelemetryLoggerProvider(_logs.LoggerProvider):
     """
-    A log emitter provider that creates SnowflakeTelemetryLogEmitters
+    A LoggerProvider that creates SnowflakeTelemetryLoggers
     """
 
-    def get_log_emitter(
-            self,
-            instrumenting_module_name: str,
-            instrumenting_module_version: str = "",
-    ) -> _logs.LogEmitter:
-        return _SnowflakeTelemetryLogEmitter(
+    def get_logger(
+        self,
+        name: str,
+        version: types.Optional[str] = None,
+        schema_url: types.Optional[str] = None,
+    ) -> _logs.Logger:
+        return _SnowflakeTelemetryLogger(
             self._resource,
-            self._multi_log_processor,
+            self._multi_log_record_processor,
             otel_instrumentation.InstrumentationScope(
-                instrumenting_module_name, instrumenting_module_version
+                name,
+                version,
+                schema_url,
             ),
         )
 
