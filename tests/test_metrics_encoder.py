@@ -50,10 +50,10 @@ from opentelemetry.sdk.util.instrumentation import (
 from snowflake.telemetry._internal.exporter.otlp.proto.metrics import (
     ProtoMetricExporter,
 )
-from snowflake.telemetry.test.metrics_test_utils import (
+from sftlm.telemetry.test.metrics_test_utils import (
     InMemoryMetricWriter,
 )
-from snowflake.telemetry.test.metrictestutil import _generate_gauge, _generate_sum
+from sftlm.telemetry.test.metrictestutil import _generate_gauge, _generate_sum
 
 
 class TestOTLPMetricsEncoder(unittest.TestCase):

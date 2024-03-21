@@ -15,6 +15,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
+        "coverage >= 7.0.0",
         "pytest >= 7.0.0",
         "snowflake-telemetry-python == 0.4.0.dev",
     ],

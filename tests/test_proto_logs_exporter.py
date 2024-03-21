@@ -14,7 +14,7 @@ from opentelemetry.proto.logs.v1.logs_pb2 import (
 from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
     SnowflakeLoggingHandler,
 )
-from snowflake.telemetry.test.logs_test_utils import InMemoryLogWriter
+from sftlm.telemetry.test.logs_test_utils import InMemoryLogWriter
 
 
 class TestSnowflakeLoggingHandler(unittest.TestCase):
