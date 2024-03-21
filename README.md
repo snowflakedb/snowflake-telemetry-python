@@ -31,5 +31,6 @@ cd snowflake-telemetry-python
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install . ./tests/snowflake-telemetry-test-utils
+pip install --editable .
+pip install --editable ./tests/snowflake-telemetry-test-utils
 ```

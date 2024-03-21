@@ -59,7 +59,7 @@ from opentelemetry.trace.status import StatusCode as SDKStatusCode
 from snowflake.telemetry._internal.exporter.otlp.proto.traces import (
     ProtoSpanExporter,
 )
-from snowflake.telemetry.test.traces_test_utils import (
+from sftlm.telemetry.test.traces_test_utils import (
     InMemorySpanWriter,
 )
 

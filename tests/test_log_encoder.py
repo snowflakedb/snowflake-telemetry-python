@@ -48,7 +48,7 @@ from opentelemetry.trace import TraceFlags
 from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
     _ProtoLogExporter,
 )
-from snowflake.telemetry.test.logs_test_utils import (
+from sftlm.telemetry.test.logs_test_utils import (
     InMemoryLogWriter,
 )
 
