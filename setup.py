@@ -27,7 +27,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "setuptools >= 40.0.0, < 66.0.0",
+        "setuptools >= 40.0.0",
         "opentelemetry-api == 1.12.0",
         "opentelemetry-exporter-otlp == 1.12.0",
         "opentelemetry-sdk == 1.12.0",
