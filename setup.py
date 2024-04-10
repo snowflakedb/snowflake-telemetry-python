@@ -5,7 +5,12 @@ from setuptools import (
 )
 
 DESCRIPTION = 'Snowflake Telemetry Python'
-LONG_DESCRIPTION = 'This package provides a set of telemetry APIs for use in Snowflake'
+LONG_DESCRIPTION = """This package provides a set of telemetry APIs for developers building on the Snowflake platform.
+
+Snowflake Documentation is available at: https://docs.snowflake.com/
+
+Source code is also available at: https://github.com/snowflakedb/snowflake-telemetry-python
+"""
 SNOWFLAKE_TELEMETRY_SRC_DIR = os.path.join("src", "snowflake", "telemetry")
 
 VERSION = None
@@ -18,10 +23,11 @@ setup(
     version=VERSION,
     author="Snowflake, Inc",
     author_email="support@snowflake.com",
+    url="https://www.snowflake.com/",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "setuptools >= 40.0.0, < 66.0.0",
+        "setuptools >= 40.0.0",
         "opentelemetry-api == 1.12.0",
         "opentelemetry-exporter-otlp == 1.12.0",
         "opentelemetry-sdk == 1.12.0",
@@ -54,6 +60,13 @@ setup(
         "Topic :: Software Development :: Libraries :: Application Frameworks",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering :: Information Analysis",
-     ],
+    ],
+    project_urls={
+        "Homepage": "https://www.snowflake.com/",
+        "Changelog": "https://github.com/snowflakedb/snowflake-telemetry-python/blob/main/CHANGELOG.md",
+        "Documentation": "https://docs.snowflake.com/en/developer-guide/logging-tracing/logging-tracing-overview",
+        "Issues": "https://github.com/snowflakedb/snowflake-telemetry-python/issues",
+        "Repository": "https://github.com/snowflakedb/snowflake-telemetry-python/",
+    },
     zip_safe=True,
 )
