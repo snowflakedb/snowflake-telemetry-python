@@ -16,7 +16,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     install_requires=[
         "pytest >= 7.0.0",
-        "snowflake-telemetry-python == 0.3.1",
+        "snowflake-telemetry-python == 0.3.2",
     ],
     packages=find_namespace_packages(
         where='src'
