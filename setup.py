@@ -4,10 +4,10 @@ from setuptools import (
     setup,
 )
 
-DESCRIPTION = 'Snowflake Telemetry Python'
+DESCRIPTION = 'Snowflake Telemetry for Python'
 LONG_DESCRIPTION = """This package provides a set of telemetry APIs for developers building on the Snowflake platform.
 
-Snowflake Documentation is available at: https://docs.snowflake.com/
+Documentation is available at: https://docs.snowflake.com/en/developer-guide/logging-tracing/tracing-python
 
 Source code is also available at: https://github.com/snowflakedb/snowflake-telemetry-python
 """
@@ -27,7 +27,6 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "setuptools >= 40.0.0",
         "opentelemetry-api == 1.23.0",
         "opentelemetry-exporter-otlp-proto-common == 1.23.0",
         "opentelemetry-sdk == 1.23.0",
@@ -64,7 +63,7 @@ setup(
     project_urls={
         "Homepage": "https://www.snowflake.com/",
         "Changelog": "https://github.com/snowflakedb/snowflake-telemetry-python/blob/main/CHANGELOG.md",
-        "Documentation": "https://docs.snowflake.com/en/developer-guide/logging-tracing/logging-tracing-overview",
+        "Documentation": "https://docs.snowflake.com/en/developer-guide/logging-tracing/tracing-python",
         "Issues": "https://github.com/snowflakedb/snowflake-telemetry-python/issues",
         "Repository": "https://github.com/snowflakedb/snowflake-telemetry-python/",
     },
