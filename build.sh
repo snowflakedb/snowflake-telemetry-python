@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 # This script builds snowflake-telemetry-python for release. It is called from
-# a Jenkins job called SnowflakeTelemetryAnacondaPackageBuilder.
+# a Jenkins job called SnowflakeTelemetryPythonPackageBuilder.
 #
 # Prequisites:
 # - activate a conda environment
