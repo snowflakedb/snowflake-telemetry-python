@@ -1,6 +1,6 @@
 # Release History
 
-## 0.4.0 (2024-04-17)
+## 0.4.0 (2024-04-22)
 
 * Upgrade OpenTelemetry Python dependencies to version 1.23.0
 * Drop the dependency on package opentelemetry-exporter-otlp and all its transitive dependencies
