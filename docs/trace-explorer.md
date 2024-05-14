@@ -31,35 +31,35 @@ session = get_active_session()
 
 DATABASE = 'YOUR_EVENT_TABLE_DATABASE'
 SCHEMA = 'YOUR_EVENT_TABLE_SCHEMA'
-TABLE = 'YOUR_EVENT_TABLE_NAME'
-FULLY_QUALIFIED_TABLE = ".".join([DATABASE, SCHEMA, TABLE])
+EVENT_TABLE = 'YOUR_EVENT_TABLE_NAME'
+FULLY_QUALIFIED_TABLE = ".".join([DATABASE, SCHEMA, EVENT_TABLE])
 MARKDOWN = ""
 
-def event_to_dict(event_records):
-    events = []
-    for e in event_records:
-        event_dict = e.as_dict(True)
-        for k, v in event_dict.items():
+def row_to_dict(span_rows):
+    spans = []
+    for row in span_rows:
+        span_dict = row.as_dict(True)
+        for k, v in span_dict.items():
             if k in ["TRACE", "RECORD", "RESOURCE_ATTRIBUTES"]:
-                event_dict[k] = json.loads(v)
-        events.append(event_dict)
-    return events
+                span_dict[k] = json.loads(v)
+        spans.append(span_dict)
+    return spans
 
-def build_event_trees(events: List[Dict]):
-    event_trees = []
+def build_trace_trees(spans: List[Dict]):
+    trace_trees = []
     span_id_lookup = {}
     # Initialize lookup dict with each span_id as key
-    for e in events:
-        span_id = e["TRACE"]["span_id"]
-        span_id_lookup[span_id] = e
+    for span in spans:
+        span_id = span["TRACE"]["span_id"]
+        span_id_lookup[span_id] = span
         span_id_lookup[span_id]["CHILDREN"] = []
-    for e in events:
-        if "parent_span_id" in e["RECORD"].keys():
-            parent_span_id = e["RECORD"]["parent_span_id"]
-            span_id_lookup[parent_span_id]["CHILDREN"].append(e)
+    for span in spans:
+        if "parent_span_id" in span["RECORD"].keys():
+            parent_span_id = span["RECORD"]["parent_span_id"]
+            span_id_lookup[parent_span_id]["CHILDREN"].append(span)
         else:
-            event_trees.append(e)
-    return event_trees
+            trace_trees.append(span)
+    return trace_trees
 
 def dfs(curr_node, level, count_label):
     global MARKDOWN
@@ -77,7 +77,7 @@ def dfs(curr_node, level, count_label):
     MARKDOWN += f"- `{curr_name}`\n"
     if len(curr_node["CHILDREN"]) > 0:
         MARKDOWN += "  " * level
-        MARKDOWN += f"- Children:\n"
+        MARKDOWN += f"- Child span(s):\n"
     count_label = 0
     for child in curr_node["CHILDREN"]:
         count_label += 1
@@ -85,7 +85,7 @@ def dfs(curr_node, level, count_label):
 
 query_id = st.text_area(
     "Query ID to trace:",
-    "01b3f580-0609-1bac-0001-dd30d1705f13",
+    "01b42d80-0002-65f7-0045-80070015d8d2",
 )
 
 st.write(f"Searching for trace ID associated with {query_id}...")
@@ -103,10 +103,10 @@ trace = session.sql(
 if len(trace) > 0:
     trace_dict = trace[0].as_dict()
     trace_id = trace_dict["TRACE_ID"].replace('"', '')
-    st.write(f"Found trace ID {trace_id}")
+    st.write(f"Found trace ID {trace_id}, now searching for all spans in the trace...")
 
     # 2. Get all spans for the given trace_id
-    events_in_trace = session.sql(
+    spans_in_trace = session.sql(
         f"""
         select
             start_timestamp as started,
@@ -122,12 +122,12 @@ if len(trace) > 0:
         order by duration_ms desc;"""
     ).collect()
 
-    # 3. Build and display tree of events based on parent_span_id
-    root_events = build_event_trees(event_to_dict(events_in_trace))
-    st.write("Span trees:")
-    for root_event in root_events:
+    # 3. Build and display trace trees based on parent_span_id
+    root_spans = build_trace_trees(row_to_dict(spans_in_trace))
+    st.write("Trace trees:")
+    for root_span in root_spans:
         MARKDOWN = ""
-        dfs(root_event, level=0, count_label=1)
+        dfs(root_span, level=0, count_label=1)
         st.write(MARKDOWN)
 else:
     st.write('No trace ID found')
