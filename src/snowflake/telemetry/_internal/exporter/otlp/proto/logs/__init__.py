@@ -25,7 +25,7 @@ from opentelemetry.exporter.otlp.proto.common._log_encoder import (
     encode_logs,
 )
 from opentelemetry.proto.logs.v1.logs_pb2 import LogsData
-from opentelemetry.sdk import resources
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk._logs import export
 from opentelemetry.sdk import _logs
 from opentelemetry.util import types
@@ -138,7 +138,7 @@ class _SnowflakeTelemetryLogger(_logs.Logger):
 
     def __init__(
         self,
-        resource: resources.Resource,
+        resource: Resource,
         multi_log_record_processor: typing.Union[
             _logs_internal.SynchronousMultiLogRecordProcessor,
             _logs_internal.ConcurrentMultiLogRecordProcessor,
@@ -189,7 +189,7 @@ class _SnowflakeTelemetryLoggerProvider(_logs.LoggerProvider):
         schema_url: types.Optional[str] = None,
     ) -> _logs.Logger:
         return _SnowflakeTelemetryLogger(
-            self._resource,
+            Resource.get_empty(),
             self._multi_log_record_processor,
             otel_instrumentation.InstrumentationScope(
                 name,

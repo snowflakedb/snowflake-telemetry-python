@@ -43,6 +43,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
         self.root_logger.warn("warn, something is wrong")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 2)
+        self.assertEqual(len(finished_protos[0].resource_logs[0].resource.attributes), 0)
         self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
         warning_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
@@ -52,6 +53,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
             SEVERITY_NUMBER_WARN,
             this_method_name
         )
+        self.assertEqual(len(finished_protos[1].resource_logs[0].resource.attributes), 0)
         self.assertEqual(finished_protos[1].resource_logs[0].scope_logs[0].scope.name, "root")
         warn_log_record = finished_protos[1].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
@@ -68,6 +70,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
         self.root_logger.error("error, something is wrong")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 1)
+        self.assertEqual(len(finished_protos[0].resource_logs[0].resource.attributes), 0)
         self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
         error_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
@@ -84,6 +87,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
         self.root_logger.critical("critical, something is wrong")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 1)
+        self.assertEqual(len(finished_protos[0].resource_logs[0].resource.attributes), 0)
         self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
         fatal_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
@@ -102,6 +106,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
         local_logger.critical("critical, something is wrong at local scope")
         finished_protos = self.log_writer.get_finished_protos()
         self.assertEqual(len(finished_protos), 2)
+        self.assertEqual(len(finished_protos[0].resource_logs[0].resource.attributes), 0)
         self.assertEqual(finished_protos[0].resource_logs[0].scope_logs[0].scope.name, "root")
         root_log_record = finished_protos[0].resource_logs[0].scope_logs[0].log_records[0]
         self._log_record_check_helper(
@@ -112,6 +117,7 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
             this_method_name
         )
         local_log_record = finished_protos[1].resource_logs[0].scope_logs[0].log_records[0]
+        self.assertEqual(len(finished_protos[1].resource_logs[0].resource.attributes), 0)
         self.assertEqual(finished_protos[1].resource_logs[0].scope_logs[0].scope.name, "tests")
         self._log_record_check_helper(
             local_log_record,
