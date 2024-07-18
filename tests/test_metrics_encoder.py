@@ -33,10 +33,8 @@ from opentelemetry.proto.resource.v1.resource_pb2 import (
 from opentelemetry.sdk.metrics.export import AggregationTemporality, Buckets
 from opentelemetry.sdk.metrics.export import (
     ExponentialHistogram as ExponentialHistogramType,
-)
-from opentelemetry.sdk.metrics.export import ExponentialHistogramDataPoint
-from opentelemetry.sdk.metrics.export import Histogram as HistogramType
-from opentelemetry.sdk.metrics.export import (
+    Histogram as HistogramType,
+    ExponentialHistogramDataPoint,
     HistogramDataPoint,
     Metric,
     MetricsData,

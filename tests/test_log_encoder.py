@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-from typing import List, Tuple
+from typing import Sequence, Tuple
 
 from opentelemetry._logs import SeverityNumber
 from opentelemetry.exporter.otlp.proto.common._internal import (
@@ -40,8 +40,7 @@ from opentelemetry.proto.logs.v1.logs_pb2 import ScopeLogs as PB2ScopeLogs
 from opentelemetry.proto.resource.v1.resource_pb2 import (
     Resource as PB2Resource,
 )
-from opentelemetry.sdk._logs import LogData, LogLimits
-from opentelemetry.sdk._logs import LogRecord as SDKLogRecord
+from opentelemetry.sdk._logs import LogData, LogLimits, LogRecord as SDKLogRecord
 from opentelemetry.sdk.resources import Resource as SDKResource
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import TraceFlags
@@ -82,10 +81,11 @@ class TestOTLPLogEncoder(unittest.TestCase):
         )
 
     @staticmethod
-    def _get_sdk_log_data() -> List[LogData]:
+    def _get_sdk_log_data() -> Sequence[LogData]:
         log1 = LogData(
             log_record=SDKLogRecord(
                 timestamp=1644650195189786880,
+                observed_timestamp=1644660000000000000,
                 trace_id=89564621134313219400156819398935297684,
                 span_id=1312458408527513268,
                 trace_flags=TraceFlags(0x01),
@@ -106,6 +106,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
         log2 = LogData(
             log_record=SDKLogRecord(
                 timestamp=1644650249738562048,
+                observed_timestamp=1644660000000000000,
                 trace_id=0,
                 span_id=0,
                 trace_flags=TraceFlags.DEFAULT,
@@ -123,6 +124,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
         log3 = LogData(
             log_record=SDKLogRecord(
                 timestamp=1644650427658989056,
+                observed_timestamp=1644660000000000000,
                 trace_id=271615924622795969659406376515024083555,
                 span_id=4242561578944770265,
                 trace_flags=TraceFlags(0x01),
@@ -138,6 +140,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
         log4 = LogData(
             log_record=SDKLogRecord(
                 timestamp=1644650584292683008,
+                observed_timestamp=1644660000000000000,
                 trace_id=212592107417388365804938480559624925555,
                 span_id=6077757853989569223,
                 trace_flags=TraceFlags(0x01),
@@ -159,7 +162,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
 
     def get_test_logs(
         self,
-    ) -> Tuple[List[SDKLogRecord], ExportLogsServiceRequest]:
+    ) -> Tuple[Sequence[LogData], ExportLogsServiceRequest]:
         sdk_logs = self._get_sdk_log_data()
 
         pb2_service_request = ExportLogsServiceRequest(
@@ -181,13 +184,14 @@ class TestOTLPLogEncoder(unittest.TestCase):
                             log_records=[
                                 PB2LogRecord(
                                     time_unix_nano=1644650195189786880,
+                                    observed_time_unix_nano=1644660000000000000,
                                     trace_id=_encode_trace_id(
                                         89564621134313219400156819398935297684
                                     ),
                                     span_id=_encode_span_id(
                                         1312458408527513268
                                     ),
-                                    flags=int(TraceFlags(0x01)),
+                                    flags=int(0x01),
                                     severity_text="WARN",
                                     severity_number=SeverityNumber.WARN.value,
                                     body=_encode_value(
@@ -207,13 +211,14 @@ class TestOTLPLogEncoder(unittest.TestCase):
                             log_records=[
                                 PB2LogRecord(
                                     time_unix_nano=1644650584292683008,
+                                    observed_time_unix_nano=1644660000000000000,
                                     trace_id=_encode_trace_id(
                                         212592107417388365804938480559624925555
                                     ),
                                     span_id=_encode_span_id(
                                         6077757853989569223
                                     ),
-                                    flags=int(TraceFlags(0x01)),
+                                    flags=int(0x01),
                                     severity_text="INFO",
                                     severity_number=SeverityNumber.INFO.value,
                                     body=_encode_value(
@@ -249,9 +254,8 @@ class TestOTLPLogEncoder(unittest.TestCase):
                             log_records=[
                                 PB2LogRecord(
                                     time_unix_nano=1644650249738562048,
-                                    trace_id=_encode_trace_id(0),
-                                    span_id=_encode_span_id(0),
-                                    flags=int(TraceFlags.DEFAULT),
+                                    observed_time_unix_nano=1644660000000000000,
+                                    flags=int(0x00),
                                     severity_text="WARN",
                                     severity_number=SeverityNumber.WARN.value,
                                     body=_encode_value(
@@ -266,13 +270,14 @@ class TestOTLPLogEncoder(unittest.TestCase):
                             log_records=[
                                 PB2LogRecord(
                                     time_unix_nano=1644650427658989056,
+                                    observed_time_unix_nano=1644660000000000000,
                                     trace_id=_encode_trace_id(
                                         271615924622795969659406376515024083555
                                     ),
                                     span_id=_encode_span_id(
                                         4242561578944770265
                                     ),
-                                    flags=int(TraceFlags(0x01)),
+                                    flags=int(0x01),
                                     severity_text="DEBUG",
                                     severity_number=SeverityNumber.DEBUG.value,
                                     body=_encode_value("To our galaxy"),
@@ -290,7 +295,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
         return sdk_logs, pb2_service_request
 
     @staticmethod
-    def _get_test_logs_dropped_attributes() -> List[LogData]:
+    def _get_test_logs_dropped_attributes() -> Sequence[LogData]:
         log1 = LogData(
             log_record=SDKLogRecord(
                 timestamp=1644650195189786880,

@@ -40,10 +40,11 @@ from opentelemetry.proto.resource.v1.resource_pb2 import (
 from opentelemetry.proto.trace.v1.trace_pb2 import (
     ResourceSpans as PB2ResourceSpans,
     TracesData as PB2TracesData,
+    ScopeSpans as PB2ScopeSpans,
+    Span as PB2Span,
+    SpanFlags as PB2SpanFlags,
+    Status as PB2Status,
 )
-from opentelemetry.proto.trace.v1.trace_pb2 import ScopeSpans as PB2ScopeSpans
-from opentelemetry.proto.trace.v1.trace_pb2 import Span as PB2SPan
-from opentelemetry.proto.trace.v1.trace_pb2 import Status as PB2Status
 from opentelemetry.sdk.trace import Event as SDKEvent
 from opentelemetry.sdk.trace import Resource as SDKResource
 from opentelemetry.sdk.trace import SpanContext as SDKSpanContext
@@ -97,7 +98,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
         )
 
         parent_span_context = SDKSpanContext(
-            trace_id, 0x1111111111111111, is_remote=False
+            trace_id, 0x1111111111111111, is_remote=True
         )
 
         other_context = SDKSpanContext(
@@ -185,15 +186,15 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                         PB2ScopeSpans(
                             scope=PB2InstrumentationScope(),
                             spans=[
-                                PB2SPan(
+                                PB2Span(
                                     trace_id=trace_id,
                                     span_id=_encode_span_id(
                                         otel_spans[0].context.span_id
                                     ),
-                                    trace_state=None,
                                     parent_span_id=_encode_span_id(
                                         otel_spans[0].parent.span_id
                                     ),
+                                    flags=PB2SpanFlags.SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK|PB2SpanFlags.SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK,
                                     name=otel_spans[0].name,
                                     kind=span_kind,
                                     start_time_unix_nano=otel_spans[
@@ -221,7 +222,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                                         ),
                                     ],
                                     events=[
-                                        PB2SPan.Event(
+                                        PB2Span.Event(
                                             name="event0",
                                             time_unix_nano=otel_spans[0]
                                             .events[0]
@@ -249,7 +250,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                                         )
                                     ],
                                     links=[
-                                        PB2SPan.Link(
+                                        PB2Span.Link(
                                             trace_id=_encode_trace_id(
                                                 otel_spans[0]
                                                 .links[0]
@@ -260,6 +261,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                                                 .links[0]
                                                 .context.span_id
                                             ),
+                                            flags=PB2SpanFlags.SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK,
                                             attributes=[
                                                 PB2KeyValue(
                                                     key="key_bool",
@@ -283,13 +285,12 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                                 version="version",
                             ),
                             spans=[
-                                PB2SPan(
+                                PB2Span(
                                     trace_id=trace_id,
                                     span_id=_encode_span_id(
                                         otel_spans[3].context.span_id
                                     ),
-                                    trace_state=None,
-                                    parent_span_id=None,
+                                    flags=PB2SpanFlags.SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK,
                                     name=otel_spans[3].name,
                                     kind=span_kind,
                                     start_time_unix_nano=otel_spans[
@@ -320,13 +321,12 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                         PB2ScopeSpans(
                             scope=PB2InstrumentationScope(),
                             spans=[
-                                PB2SPan(
+                                PB2Span(
                                     trace_id=trace_id,
                                     span_id=_encode_span_id(
                                         otel_spans[1].context.span_id
                                     ),
-                                    trace_state=None,
-                                    parent_span_id=None,
+                                    flags=PB2SpanFlags.SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK,
                                     name=otel_spans[1].name,
                                     kind=span_kind,
                                     start_time_unix_nano=otel_spans[
@@ -338,13 +338,12 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                                     links=None,
                                     status={},
                                 ),
-                                PB2SPan(
+                                PB2Span(
                                     trace_id=trace_id,
                                     span_id=_encode_span_id(
                                         otel_spans[2].context.span_id
                                     ),
-                                    trace_state=None,
-                                    parent_span_id=None,
+                                    flags=PB2SpanFlags.SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK,
                                     name=otel_spans[2].name,
                                     kind=span_kind,
                                     start_time_unix_nano=otel_spans[
