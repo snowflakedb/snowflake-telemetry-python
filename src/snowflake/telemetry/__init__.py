@@ -11,7 +11,7 @@ Provides a set of APIs for emitting telemetry data from Python UDF, UDTF, and
 Stored Procedures.
 """
 
-from opentelemetry import trace
+from opentelemetry.trace import get_current_span
 from opentelemetry.util import types
 
 from snowflake.telemetry.version import VERSION
@@ -26,7 +26,8 @@ def add_event(
     """
     Add an event name and associated attributes to the current span.
     """
-    trace.get_current_span().add_event(name, attributes)
+    get_current_span().add_event(name, attributes)
+
 
 def set_span_attribute(
         key: str,
@@ -35,4 +36,4 @@ def set_span_attribute(
     """
     Set an attribute key, value pair on the current span.
     """
-    trace.get_current_span().set_attribute(key, value)
+    get_current_span().set_attribute(key, value)

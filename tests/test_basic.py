@@ -4,7 +4,7 @@ Tests for Snowflake Telemetry Python.
 import unittest
 
 from snowflake import telemetry
-from opentelemetry import trace
+from opentelemetry.trace import get_current_span
 from opentelemetry.sdk.trace import (
     TracerProvider,
 )
@@ -14,10 +14,7 @@ from opentelemetry.sdk.trace.export import (
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
-from opentelemetry.trace import (
-    Status,
-    StatusCode,
-)
+
 from opentelemetry.trace.span import INVALID_SPAN
 
 
@@ -33,7 +30,7 @@ class TestBasic(unittest.TestCase):
         """
         Tests that no exceptions are raised by public API methods when called without a current span
         """
-        self.assertEqual(trace.get_current_span(), INVALID_SPAN)
+        self.assertEqual(get_current_span(), INVALID_SPAN)
         telemetry.add_event("EventName1")
         telemetry.add_event("EventName2",
                             {
@@ -48,9 +45,9 @@ class TestBasic(unittest.TestCase):
         """
         self.configure_open_telemetry()
         with self.tracer.start_as_current_span("Auto-instrumented span"):
-            self.assertNotEqual(trace.get_current_span(), INVALID_SPAN)
+            self.assertNotEqual(get_current_span(), INVALID_SPAN)
             telemetry.add_event("EventName1")
-            trace.get_current_span().end()
+            get_current_span().end()
         spans = self.memory_exporter.get_finished_spans()
         self.assertEqual(1, len(spans))
         events = spans[0].events
@@ -64,9 +61,9 @@ class TestBasic(unittest.TestCase):
         """
         self.configure_open_telemetry()
         with self.tracer.start_as_current_span("Auto-instrumented span"):
-            self.assertNotEqual(trace.get_current_span(), INVALID_SPAN)
+            self.assertNotEqual(get_current_span(), INVALID_SPAN)
             telemetry.add_event(None)
-            trace.get_current_span().end()
+            get_current_span().end()
         spans = self.memory_exporter.get_finished_spans()
         self.assertEqual(1, len(spans))
         events = spans[0].events
@@ -80,9 +77,9 @@ class TestBasic(unittest.TestCase):
         """
         self.configure_open_telemetry()
         with self.tracer.start_as_current_span("Auto-instrumented span"):
-            self.assertNotEqual(trace.get_current_span(), INVALID_SPAN)
+            self.assertNotEqual(get_current_span(), INVALID_SPAN)
             telemetry.add_event("")
-            trace.get_current_span().end()
+            get_current_span().end()
         spans = self.memory_exporter.get_finished_spans()
         self.assertEqual(1, len(spans))
         events = spans[0].events
@@ -93,7 +90,7 @@ class TestBasic(unittest.TestCase):
     def test_add_event_with_attributes(self):
         self.configure_open_telemetry()
         with self.tracer.start_as_current_span("Auto-instrumented span"):
-            self.assertNotEqual(trace.get_current_span(), INVALID_SPAN)
+            self.assertNotEqual(get_current_span(), INVALID_SPAN)
             telemetry.add_event("EventName2",
                                 {
                                     "some int": 42,
@@ -103,7 +100,7 @@ class TestBasic(unittest.TestCase):
                                     "a false value": False,
                                     "a none value": None,
                                 })
-            trace.get_current_span().end()
+            get_current_span().end()
         spans = self.memory_exporter.get_finished_spans()
         self.assertEqual(1, len(spans))
         events = spans[0].events
@@ -120,14 +117,14 @@ class TestBasic(unittest.TestCase):
     def test_set_span_attribute(self):
         self.configure_open_telemetry()
         with self.tracer.start_as_current_span("Auto-instrumented span"):
-            self.assertNotEqual(trace.get_current_span(), INVALID_SPAN)
+            self.assertNotEqual(get_current_span(), INVALID_SPAN)
             telemetry.set_span_attribute("some int", 42)
             telemetry.set_span_attribute("some str", "Val1")
             telemetry.set_span_attribute("some float", 3.14)
             telemetry.set_span_attribute("a true value", True)
             telemetry.set_span_attribute("a false value", False)
             telemetry.set_span_attribute("a none value", None)
-            trace.get_current_span().end()
+            get_current_span().end()
         spans = self.memory_exporter.get_finished_spans()
         self.assertEqual(1, len(spans))
         attributes = spans[0].attributes
