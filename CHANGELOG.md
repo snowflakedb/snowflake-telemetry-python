@@ -1,5 +1,10 @@
 # Release History
 
+## 0.5.0 (2024-07-23)
+
+* Set empty resource for Python OpenTelemetry config.
+* Add SnowflakeTraceIdGenerator implementation.
+
 ## 0.4.0 (2024-04-22)
 
 * Upgrade OpenTelemetry Python dependencies to version 1.23.0
