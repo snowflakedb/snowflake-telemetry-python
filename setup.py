@@ -27,9 +27,9 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "opentelemetry-api == 1.23.0",
-        "opentelemetry-exporter-otlp-proto-common == 1.23.0",
-        "opentelemetry-sdk == 1.23.0",
+        "opentelemetry-api == 1.25.0",
+        "opentelemetry-exporter-otlp-proto-common == 1.25.0",
+        "opentelemetry-sdk == 1.25.0",
     ],
     packages=find_namespace_packages(
         where='src'
