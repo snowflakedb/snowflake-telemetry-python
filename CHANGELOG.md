@@ -1,5 +1,9 @@
 # Release History
 
+## Unreleased
+
+* Upgrade OpenTelemetry Python dependencies to version 1.26.0
+
 ## 0.5.0 (2024-07-23)
 
 * Set empty resource for Python OpenTelemetry config.

@@ -183,10 +183,10 @@ class _SnowflakeTelemetryLoggerProvider(_logs.LoggerProvider):
     """
 
     def get_logger(
-        self,
-        name: str,
-        version: types.Optional[str] = None,
-        schema_url: types.Optional[str] = None,
+            self, name: str,
+            version: types.Optional[str] = None,
+            schema_url: types.Optional[str] = None,
+            attributes: types.Optional[types.Attributes] = None,
     ) -> _logs.Logger:
         return _SnowflakeTelemetryLogger(
             Resource.get_empty(),
