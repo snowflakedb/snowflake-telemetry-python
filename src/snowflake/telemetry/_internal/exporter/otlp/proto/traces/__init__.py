@@ -16,10 +16,10 @@ Please see the class documentation for those classes to learn more.
 import abc
 import typing
 
-from opentelemetry.exporter.otlp.proto.common.trace_encoder import (
+from snowflake.telemetry.opentelemetry.exporter.otlp.proto.common.trace_encoder import (
     encode_spans,
 )
-from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
+from snowflake.telemetry.opentelemetry.proto.trace.v1.trace import TracesData
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import (
     SpanExportResult,
@@ -72,9 +72,7 @@ class ProtoSpanExporter(SpanExporter):
     ) -> bytes:
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
-        return TracesData(
-            resource_spans=encode_spans(sdk_spans).resource_spans # pylint: disable=no-member
-        ).SerializeToString()
+        return bytes(TracesData(resource_spans=encode_spans(sdk_spans).resource_spans))
 
     def shutdown(self) -> None:
         pass

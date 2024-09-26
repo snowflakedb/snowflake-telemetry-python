@@ -22,7 +22,7 @@ from opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_trace_id,
     _encode_value,
 )
-from opentelemetry.exporter.otlp.proto.common._log_encoder import encode_logs
+from snowflake.telemetry.opentelemetry.exporter.otlp.proto.common._log_encoder import encode_logs
 from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import (
     ExportLogsServiceRequest,
 )
@@ -55,7 +55,7 @@ from snowflake.telemetry.test.logs_test_utils import (
 class TestOTLPLogEncoder(unittest.TestCase):
     def test_encode(self):
         sdk_logs, expected_encoding = self.get_test_logs()
-        self.assertEqual(encode_logs(sdk_logs), expected_encoding)
+        self.assertEqual(bytes(encode_logs(sdk_logs)), expected_encoding.SerializeToString())
 
     def test_proto_log_exporter(self):
         sdk_logs, expected_encoding = self.get_test_logs()
@@ -69,11 +69,13 @@ class TestOTLPLogEncoder(unittest.TestCase):
 
     def test_dropped_attributes_count(self):
         sdk_logs = self._get_test_logs_dropped_attributes()
-        encoded_logs = encode_logs(sdk_logs)
+        encoded_logs = bytes(encode_logs(sdk_logs))
+        decoded_logs = PB2LogsData()
+        decoded_logs.ParseFromString(encoded_logs)
         self.assertTrue(hasattr(sdk_logs[0].log_record, "dropped_attributes"))
         self.assertEqual(
             # pylint:disable=no-member
-            encoded_logs.resource_logs[0]
+            decoded_logs.resource_logs[0]
             .scope_logs[0]
             .log_records[0]
             .dropped_attributes_count,

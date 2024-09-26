@@ -21,10 +21,10 @@ import typing
 import opentelemetry.sdk.util.instrumentation as otel_instrumentation
 import opentelemetry.sdk._logs._internal as _logs_internal
 
-from opentelemetry.exporter.otlp.proto.common._log_encoder import (
+from snowflake.telemetry.opentelemetry.exporter.otlp.proto.common._log_encoder import (
     encode_logs,
 )
-from opentelemetry.proto.logs.v1.logs_pb2 import LogsData
+from snowflake.telemetry.opentelemetry.proto.logs.v1.logs import LogsData
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk._logs import export
 from opentelemetry.sdk import _logs
@@ -69,9 +69,7 @@ class _ProtoLogExporter(export.LogExporter):
     def _serialize_logs_data(batch: typing.Sequence[_logs.LogData]) -> bytes:
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
-        return LogsData(
-            resource_logs=encode_logs(batch).resource_logs # pylint: disable=no-member
-        ).SerializeToString()
+        return bytes(LogsData(resource_logs=encode_logs(batch).resource_logs))
 
     def shutdown(self):
         pass

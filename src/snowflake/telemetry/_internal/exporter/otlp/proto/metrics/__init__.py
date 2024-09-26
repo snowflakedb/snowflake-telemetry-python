@@ -17,10 +17,10 @@ import abc
 from typing import Dict
 
 import opentelemetry
-from opentelemetry.exporter.otlp.proto.common.metrics_encoder import (
+from snowflake.telemetry.opentelemetry.exporter.otlp.proto.common.metrics_encoder import (
     encode_metrics,
 )
-from opentelemetry.proto.metrics.v1.metrics_pb2 import MetricsData as PB2MetricsData
+from snowflake.telemetry.opentelemetry.proto.metrics.v1.metrics import MetricsData as PB2MetricsData
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
     MetricExportResult,
@@ -82,9 +82,7 @@ class ProtoMetricExporter(MetricExporter):
     def _serialize_metrics_data(data: MetricsData) -> bytes:
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
-        return PB2MetricsData(
-            resource_metrics=encode_metrics(data).resource_metrics # pylint: disable=no-member
-        ).SerializeToString()
+        return bytes(PB2MetricsData(resource_metrics=encode_metrics(data).resource_metrics))
 
     def force_flush(self, timeout_millis: float = 10_000) -> bool:
         return True

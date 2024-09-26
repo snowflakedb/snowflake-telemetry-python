@@ -25,7 +25,7 @@ from opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import (
     _SPAN_KIND_MAP,
     _encode_status,
 )
-from opentelemetry.exporter.otlp.proto.common.trace_encoder import encode_spans
+from snowflake.telemetry.opentelemetry.exporter.otlp.proto.common.trace_encoder import encode_spans
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
     ExportTraceServiceRequest as PB2ExportTraceServiceRequest,
 )
@@ -67,7 +67,7 @@ from snowflake.telemetry.test.traces_test_utils import (
 class TestOTLPTraceEncoder(unittest.TestCase):
     def test_encode_spans(self):
         otel_spans, expected_encoding = self.get_exhaustive_test_spans()
-        self.assertEqual(encode_spans(otel_spans), expected_encoding)
+        self.assertEqual(bytes(encode_spans(otel_spans)), expected_encoding.SerializeToString())
 
     def test_proto_span_exporter(self):
         otel_spans, expected_encoding = self.get_exhaustive_test_spans()
