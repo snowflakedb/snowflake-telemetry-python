@@ -26,7 +26,7 @@ from opentelemetry.sdk.metrics import (
     ObservableUpDownCounter,
     UpDownCounter,
 )
-from opentelemetry.exporter.otlp.proto.common._internal import (
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_attributes,
 )
 from opentelemetry.sdk.environment_variables import (
@@ -35,11 +35,8 @@ from opentelemetry.sdk.environment_variables import (
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
 )
-from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import (
-    ExportMetricsServiceRequest,
-)
-from opentelemetry.proto.common.v1.common_pb2 import InstrumentationScope
-from opentelemetry.proto.metrics.v1 import metrics_pb2 as pb2
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common import InstrumentationScope
+from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1 import metrics as pb2
 from opentelemetry.sdk.metrics.export import (
     MetricsData,
     Gauge,
@@ -48,7 +45,7 @@ from opentelemetry.sdk.metrics.export import (
     ExponentialHistogram as ExponentialHistogramType,
 )
 from typing import Dict
-from opentelemetry.proto.resource.v1.resource_pb2 import (
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource import (
     Resource as PB2Resource,
 )
 from opentelemetry.sdk.environment_variables import (
@@ -173,7 +170,7 @@ class OTLPMetricExporterMixin:
         return instrument_class_aggregation
 
 
-def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
+def encode_metrics(data: MetricsData) -> bytes:
     resource_metrics_dict = {}
 
     for resource_metrics in data.resource_metrics:
@@ -188,42 +185,37 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
 
         for scope_metrics in resource_metrics.scope_metrics:
 
-            instrumentation_scope = scope_metrics.scope
-
-            # The SDK groups metrics in instrumentation scopes already so
-            # there is no need to check for existing instrumentation scopes
-            # here.
-            pb2_scope_metrics = pb2.ScopeMetrics(
-                scope=InstrumentationScope(
-                    name=instrumentation_scope.name,
-                    version=instrumentation_scope.version,
-                )
-            )
-
-            scope_metrics_dict[instrumentation_scope] = pb2_scope_metrics
-
+            pb2_metrics = []
+            pb2_metric_gauge = None
+            pb2_metric_histogram = None
+            pb2_metric_sum = None
+            pb2_metric_exponential_histogram = None
             for metric in scope_metrics.metrics:
-                pb2_metric = pb2.Metric(
-                    name=metric.name,
-                    description=metric.description,
-                    unit=metric.unit,
-                )
-
                 if isinstance(metric.data, Gauge):
+                    pb2_data_points = []
                     for data_point in metric.data.data_points:
+                        as_int = None
+                        as_double = None
+                        if isinstance(data_point.value, int):
+                            as_int = data_point.value
+                        else:
+                            as_double = data_point.value
+
                         pt = pb2.NumberDataPoint(
                             attributes=_encode_attributes(
                                 data_point.attributes
                             ),
                             time_unix_nano=data_point.time_unix_nano,
+                            as_int=as_int,
+                            as_double=as_double,
                         )
-                        if isinstance(data_point.value, int):
-                            pt.as_int = data_point.value
-                        else:
-                            pt.as_double = data_point.value
-                        pb2_metric.gauge.data_points.append(pt)
+                        pb2_data_points.append(pt)
+                    
+                    pb2_metric_gauge = pb2.Gauge(data_points=pb2_data_points)
 
                 elif isinstance(metric.data, HistogramType):
+                    pb2_data_points = []
+                    pb2_aggregation_temporality = None
                     for data_point in metric.data.data_points:
                         pt = pb2.HistogramDataPoint(
                             attributes=_encode_attributes(
@@ -240,13 +232,26 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
                             max=data_point.max,
                             min=data_point.min,
                         )
-                        pb2_metric.histogram.aggregation_temporality = (
+                        pb2_aggregation_temporality = (
                             metric.data.aggregation_temporality
                         )
-                        pb2_metric.histogram.data_points.append(pt)
+                        pb2_data_points.append(pt)
+                    pb2_metric_histogram = pb2.Histogram(
+                        data_points=pb2_data_points, 
+                        aggregation_temporality=pb2_aggregation_temporality
+                    )
 
                 elif isinstance(metric.data, Sum):
+                    pb2_data_points = []
+                    pb2_is_monotonic = None
+                    pb2_aggregation_temporality = None
                     for data_point in metric.data.data_points:
+                        as_int = None
+                        as_double = None
+                        if isinstance(data_point.value, int):
+                            as_int = data_point.value
+                        else:
+                            as_double = data_point.value
                         pt = pb2.NumberDataPoint(
                             attributes=_encode_attributes(
                                 data_point.attributes
@@ -255,25 +260,30 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
                                 data_point.start_time_unix_nano
                             ),
                             time_unix_nano=data_point.time_unix_nano,
+                            as_int=as_int,
+                            as_double=as_double,
                         )
-                        if isinstance(data_point.value, int):
-                            pt.as_int = data_point.value
-                        else:
-                            pt.as_double = data_point.value
                         # note that because sum is a message type, the
                         # fields must be set individually rather than
                         # instantiating a pb2.Sum and setting it once
-                        pb2_metric.sum.aggregation_temporality = (
+                        pb2_aggregation_temporality = (
                             metric.data.aggregation_temporality
                         )
-                        pb2_metric.sum.is_monotonic = metric.data.is_monotonic
-                        pb2_metric.sum.data_points.append(pt)
+                        pb2_is_monotonic = metric.data.is_monotonic
+                        pb2_data_points.append(pt)
+                    pb2_metric_sum = pb2.Sum(
+                        data_points=pb2_data_points,
+                        aggregation_temporality=pb2_aggregation_temporality,
+                        is_monotonic=pb2_is_monotonic,
+                    )
 
                 elif isinstance(metric.data, ExponentialHistogramType):
+                    pb2_data_points = []
+                    pb2_aggregation_temporality = None
                     for data_point in metric.data.data_points:
 
                         if data_point.positive.bucket_counts:
-                            positive = pb2.ExponentialHistogramDataPoint.Buckets(
+                            positive = pb2.ExponentialHistogramDataPoint_Buckets(
                                 offset=data_point.positive.offset,
                                 bucket_counts=data_point.positive.bucket_counts,
                             )
@@ -281,7 +291,7 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
                             positive = None
 
                         if data_point.negative.bucket_counts:
-                            negative = pb2.ExponentialHistogramDataPoint.Buckets(
+                            negative = pb2.ExponentialHistogramDataPoint_Buckets(
                                 offset=data_point.negative.offset,
                                 bucket_counts=data_point.negative.bucket_counts,
                             )
@@ -306,10 +316,15 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
                             max=data_point.max,
                             min=data_point.min,
                         )
-                        pb2_metric.exponential_histogram.aggregation_temporality = (
+                        pb2_aggregation_temporality = (
                             metric.data.aggregation_temporality
                         )
-                        pb2_metric.exponential_histogram.data_points.append(pt)
+                        pb2_data_points.append(pt)
+                    
+                    pb2_metric_exponential_histogram = pb2.ExponentialHistogram(
+                        data_points=pb2_data_points,
+                        aggregation_temporality=pb2_aggregation_temporality,
+                    )
 
                 else:
                     _logger.warning(
@@ -318,7 +333,34 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
                     )
                     continue
 
-                pb2_scope_metrics.metrics.append(pb2_metric)
+
+                pb2_metric = pb2.Metric(
+                    name=metric.name,
+                    description=metric.description,
+                    unit=metric.unit,
+                    gauge=pb2_metric_gauge,
+                    histogram=pb2_metric_histogram,
+                    sum=pb2_metric_sum,
+                    exponential_histogram=pb2_metric_exponential_histogram,
+                )
+
+                pb2_metrics.append(pb2_metric)
+            
+            
+            instrumentation_scope = scope_metrics.scope
+
+            # The SDK groups metrics in instrumentation scopes already so
+            # there is no need to check for existing instrumentation scopes
+            # here.
+            pb2_scope_metrics = pb2.ScopeMetrics(
+                scope=InstrumentationScope(
+                    name=instrumentation_scope.name,
+                    version=instrumentation_scope.version,
+                ),
+                metrics=pb2_metrics,
+            )
+
+            scope_metrics_dict[instrumentation_scope] = pb2_scope_metrics
 
     resource_data = []
     for (
@@ -335,4 +377,4 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
             )
         )
     resource_metrics = resource_data
-    return ExportMetricsServiceRequest(resource_metrics=resource_metrics)
+    return bytes(pb2.MetricsData(resource_metrics=resource_metrics))

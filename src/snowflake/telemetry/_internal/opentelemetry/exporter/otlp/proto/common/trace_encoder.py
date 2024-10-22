@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import (
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import (
     encode_spans,
 )
 
