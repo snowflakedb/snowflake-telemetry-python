@@ -106,6 +106,11 @@ def get_logs_data() -> Sequence[LogData]:
 
     return [log1, log2, log3, log4]
 
+def get_logs_data_4MB() -> Sequence[LogData]:
+    out = []
+    for _ in range(8000):
+        out.extend(get_logs_data())
+    return out
 
 HISTOGRAM = Metric(
     name="histogram",
