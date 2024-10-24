@@ -58,6 +58,6 @@ find opentelemetry/proto/ -regex ".*\.py?" -exec rm {} +
 all_protos=$(find $PROTO_REPO_DIR/ -iname "*.proto")
 python -m grpc_tools.protoc \
     -I $PROTO_REPO_DIR \
-    --plugin=protoc-gen-custom-plugin=$repo_root/compile/plugin.py \
+    --plugin=protoc-gen-custom-plugin=$repo_root/scripts/plugin.py \
     --custom-plugin_out=. \
     $all_protos

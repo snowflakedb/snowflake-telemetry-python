@@ -10,10 +10,15 @@ import os
 from snowflake.telemetry._internal.serialize import ProtoSerializer, Enum
 
 class TestCompile(unittest.TestCase):
+    def namespace_serialize_message(self, message_type: str, local_namespace: dict, **kwargs) -> bytes:
+        assert message_type in local_namespace, f"Message type {message_type} not found in local namespace"
+        return local_namespace[message_type](**kwargs)
+
     def test_compile(self):
         with tempfile.NamedTemporaryFile(suffix=".proto", mode="w", delete=False) as proto_file:
             # Define a simple proto file
-            proto_file.write("""syntax = "proto3";
+            proto_file.write(
+                """syntax = "proto3";
 package opentelemetry.proto.common.v1;
 
 message AnyValue {
@@ -62,7 +67,7 @@ message InstrumentationScope {
                 "grpc_tools.protoc",
                 "-I",
                 proto_file_dir,
-                "--plugin=protoc-gen-custom-plugin=compile/plugin.py",
+                "--plugin=protoc-gen-custom-plugin=scripts/plugin.py",
                 f"--custom-plugin_out={tempfile.gettempdir()}",
                 proto_file_name,
             ], capture_output=True)
@@ -83,5 +88,4 @@ message InstrumentationScope {
                 local_namespace = {}
                 eval(compile(generated_code, generated_code_file, "exec"), globals(), local_namespace)
 
-                self.assertTrue("AnyValue" in local_namespace)
-                self.assertEquals(local_namespace["AnyValue"](string_value="test"), b'\n\x04test')
+                self.assertEquals(b'\n\x04test', self.namespace_serialize_message("AnyValue", local_namespace, string_value="test"))
