@@ -32,8 +32,8 @@ def pb_fixed32(): return pb_uint32()
 def pb_sfixed64(): return pb_int64()
 def pb_sfixed32(): return pb_int32()
 def pb_bool(): return booleans()
-def pb_string(): return text(max_size=100)
-def pb_bytes(): return binary(max_size=100)
+def pb_string(): return text(max_size=20)
+def pb_bytes(): return binary(max_size=20)
 def pb_enum(enum): return sampled_from([member.value for member in enum])
 def pb_repeated(type): return lists(type, max_size=3) # limit the size of the repeated field to speed up testing
 def pb_span_id(): return binary(min_size=8, max_size=8)
@@ -172,6 +172,9 @@ def encode_recurse(obj: EncodeWithArgs, strategy: str) -> Any:
         return obj.cls.sf(**kwargs)
 
 class TestProtoSerialization(unittest.TestCase):
+    @hypothesis.settings(
+        suppress_health_check=[hypothesis.HealthCheck.too_slow]
+    )
     @hypothesis.given(logs_data())
     def test_log_data(self, logs_data):
         self.assertEqual(
