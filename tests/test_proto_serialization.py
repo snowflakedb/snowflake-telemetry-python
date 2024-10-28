@@ -32,9 +32,12 @@ def pb_fixed32(): return pb_uint32()
 def pb_sfixed64(): return pb_int64()
 def pb_sfixed32(): return pb_int32()
 def pb_bool(): return booleans()
-def pb_string(): return text()
-def pb_bytes(): return binary()
+def pb_string(): return text(max_size=100)
+def pb_bytes(): return binary(max_size=100)
 def pb_enum(enum): return sampled_from([member.value for member in enum])
+def pb_repeated(type): return lists(type, max_size=3) # limit the size of the repeated field to speed up testing
+def pb_span_id(): return binary(min_size=8, max_size=8)
+def pb_trace_id(): return binary(min_size=16, max_size=16)
 
 # Maps protobuf types to their serialization functions, from the protobuf and snowflake serialization libraries
 @dataclass
@@ -65,14 +68,14 @@ def instrumentation_scope(draw):
     return EncodeWithArgs({
         "name": draw(pb_string()),
         "version": draw(pb_string()),
-        "attributes": draw(lists(key_value())),
+        "attributes": draw(pb_repeated(key_value())),
         "dropped_attributes_count": draw(pb_uint32()),
     }, InstrumentationScope)
 
 @composite
 def resource(draw):
     return EncodeWithArgs({
-        "attributes": draw(lists(key_value())),
+        "attributes": draw(pb_repeated(key_value())),
         "dropped_attributes_count": draw(pb_uint32()),
     }, Resource)
 
@@ -99,7 +102,7 @@ def any_value(draw):
 @composite
 def array_value(draw):
     return EncodeWithArgs({
-        "values": draw(lists(any_value())),
+        "values": draw(pb_repeated(any_value())),
     }, ArrayValue)
 
 @composite
@@ -112,7 +115,7 @@ def key_value(draw):
 @composite
 def key_value_list(draw):
     return EncodeWithArgs({
-        "values": draw(lists(key_value())),
+        "values": draw(pb_repeated(key_value())),
     }, KeyValueList)
 
 @composite
@@ -123,18 +126,18 @@ def log_record(draw):
         "severity_number": draw(pb_enum(logs_sf.SeverityNumber)),
         "severity_text": draw(pb_string()),
         "body": draw(any_value()),
-        "attributes": draw(lists(key_value())),
+        "attributes": draw(pb_repeated(key_value())),
         "dropped_attributes_count": draw(pb_uint32()),
         "flags": draw(pb_fixed32()),
-        "span_id": draw(pb_bytes()),
-        "trace_id": draw(pb_bytes()),
+        "span_id": draw(pb_span_id()),
+        "trace_id": draw(pb_trace_id()),
     }, LogRecord)
 
 @composite
 def scope_logs(draw):
     return EncodeWithArgs({
         "scope": draw(instrumentation_scope()),
-        "log_records": draw(lists(log_record())),
+        "log_records": draw(pb_repeated(log_record())),
         "schema_url": draw(pb_string()),
     }, ScopeLogs)
 
@@ -142,14 +145,14 @@ def scope_logs(draw):
 def resource_logs(draw):
     return EncodeWithArgs({
         "resource": draw(resource()),
-        "scope_logs": draw(lists(scope_logs())),
+        "scope_logs": draw(pb_repeated(scope_logs())),
         "schema_url": draw(pb_string()),
     }, ResourceLogs)
 
 @composite
 def logs_data(draw):
     return EncodeWithArgs({
-        "resource_logs": draw(lists(resource_logs())),
+        "resource_logs": draw(pb_repeated(resource_logs())),
     }, LogsData)
 
 # Helper function to recursively encode protobuf types using the generated args 
@@ -169,11 +172,6 @@ def encode_recurse(obj: EncodeWithArgs, strategy: str) -> Any:
         return obj.cls.sf(**kwargs)
 
 class TestProtoSerialization(unittest.TestCase):
-    @hypothesis.settings(
-        suppress_health_check=[
-            hypothesis.HealthCheck.too_slow,
-        ],
-    )
     @hypothesis.given(logs_data())
     def test_log_data(self, logs_data):
         self.assertEqual(
