@@ -9,12 +9,12 @@ import os
 # Import into globals() so generated code string can be compiled
 from snowflake.telemetry._internal.serialize import ProtoSerializer, Enum
 
-class TestCompile(unittest.TestCase):
+class TestProtocPlugin(unittest.TestCase):
     def namespace_serialize_message(self, message_type: str, local_namespace: dict, **kwargs) -> bytes:
         assert message_type in local_namespace, f"Message type {message_type} not found in local namespace"
         return local_namespace[message_type](**kwargs)
 
-    def test_compile(self):
+    def test_protoc_plugin(self):
         with tempfile.NamedTemporaryFile(suffix=".proto", mode="w", delete=False) as proto_file:
             # Define a simple proto file
             proto_file.write(
@@ -88,4 +88,4 @@ message InstrumentationScope {
                 local_namespace = {}
                 eval(compile(generated_code, generated_code_file, "exec"), globals(), local_namespace)
 
-                self.assertEquals(b'\n\x04test', self.namespace_serialize_message("AnyValue", local_namespace, string_value="test"))
+                self.assertEqual(b'\n\x04test', self.namespace_serialize_message("AnyValue", local_namespace, string_value="test"))
