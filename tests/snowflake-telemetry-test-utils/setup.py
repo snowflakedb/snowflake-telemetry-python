@@ -21,6 +21,7 @@ setup(
         "grpcio-tools", 
         "black", 
         "isort",
+        "hypothesis >= 6.0.0",
     ],
     packages=find_namespace_packages(
         where='src'
