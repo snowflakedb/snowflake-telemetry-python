@@ -41,11 +41,11 @@ class ProtoSerializer:
 
     def serialize_int32(self, tag: bytes, value: int) -> None:
         self.out += tag
-        self._write_varint_unsigned(value + 1 << 32 if value < 0 else value)
+        self._write_varint_unsigned(value + (1 << 32) if value < 0 else value)
 
     def serialize_int64(self, tag: bytes, value: int) -> None:
         self.out += tag
-        self._write_varint_unsigned(value + 1 << 64 if value < 0 else value)
+        self._write_varint_unsigned(value + (1 << 64) if value < 0 else value)
 
     def serialize_fixed32(self, tag: bytes, value: int) -> None:
         self.out += tag
