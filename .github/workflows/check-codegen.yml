@@ -1,4 +1,6 @@
-# This test will check that the codegen script is up to date with the latest changes in the telemetry schema.
+# This workflow will delete and regenerate the opentelemetry marshaling code using scripts/proto_codegen.sh.
+# If generating the code produces any changes from what is currently checked in, the workflow will fail and prompt the user to regenerate the code.
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Check Codegen
 
@@ -27,6 +29,7 @@ jobs:
         python-version: "3.11"
     - name: Run codegen script
       run: |
+        rm -rf src/snowflake/telemetry/_internal/opentelemetry/proto/
         ./scripts/proto_codegen.sh
     - name: Check for changes
       run: |

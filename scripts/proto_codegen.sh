@@ -52,6 +52,7 @@ fi
 cd $repo_root/src/snowflake/telemetry/_internal
 
 # clean up old generated code
+mkdir -p opentelemetry/proto
 find opentelemetry/proto/ -regex ".*\.py?" -exec rm {} +
 
 # generate proto code for all protos
