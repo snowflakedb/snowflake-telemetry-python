@@ -13,6 +13,6 @@
 # limitations under the License.
 
 
-from opentelemetry.exporter.otlp.proto.common.version import __version__
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.version import __version__
 
 __all__ = ["__version__"]

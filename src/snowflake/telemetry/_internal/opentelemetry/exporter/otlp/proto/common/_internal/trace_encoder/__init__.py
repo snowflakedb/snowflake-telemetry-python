@@ -16,34 +16,35 @@ import logging
 from collections import defaultdict
 from typing import List, Optional, Sequence
 
-from opentelemetry.exporter.otlp.proto.common._internal import (
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_attributes,
     _encode_instrumentation_scope,
     _encode_resource,
     _encode_span_id,
     _encode_trace_id,
 )
-from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
-    ExportTraceServiceRequest as PB2ExportTraceServiceRequest,
-)
-from opentelemetry.proto.trace.v1.trace_pb2 import (
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace import (
     ResourceSpans as PB2ResourceSpans,
+    ScopeSpans as PB2ScopeSpans,
+    Span as PB2Span,
+    SpanFlags as PB2SpanFlags,
+    Status as PB2Status,
+    Span_SpanKind as PB2SpanKind,
+    Span_Event as PB2SpanEvent,
+    Span_Link as PB2SpanLink,
+    TracesData as PB2TracesData,
 )
-from opentelemetry.proto.trace.v1.trace_pb2 import ScopeSpans as PB2ScopeSpans
-from opentelemetry.proto.trace.v1.trace_pb2 import Span as PB2SPan
-from opentelemetry.proto.trace.v1.trace_pb2 import SpanFlags as PB2SpanFlags
-from opentelemetry.proto.trace.v1.trace_pb2 import Status as PB2Status
 from opentelemetry.sdk.trace import Event, ReadableSpan
 from opentelemetry.trace import Link, SpanKind
 from opentelemetry.trace.span import SpanContext, Status, TraceState
 
 # pylint: disable=E1101
 _SPAN_KIND_MAP = {
-    SpanKind.INTERNAL: PB2SPan.SpanKind.SPAN_KIND_INTERNAL,
-    SpanKind.SERVER: PB2SPan.SpanKind.SPAN_KIND_SERVER,
-    SpanKind.CLIENT: PB2SPan.SpanKind.SPAN_KIND_CLIENT,
-    SpanKind.PRODUCER: PB2SPan.SpanKind.SPAN_KIND_PRODUCER,
-    SpanKind.CONSUMER: PB2SPan.SpanKind.SPAN_KIND_CONSUMER,
+    SpanKind.INTERNAL: PB2SpanKind.SPAN_KIND_INTERNAL,
+    SpanKind.SERVER: PB2SpanKind.SPAN_KIND_SERVER,
+    SpanKind.CLIENT: PB2SpanKind.SPAN_KIND_CLIENT,
+    SpanKind.PRODUCER: PB2SpanKind.SPAN_KIND_PRODUCER,
+    SpanKind.CONSUMER: PB2SpanKind.SPAN_KIND_CONSUMER,
 }
 
 _logger = logging.getLogger(__name__)
@@ -51,10 +52,10 @@ _logger = logging.getLogger(__name__)
 
 def encode_spans(
     sdk_spans: Sequence[ReadableSpan],
-) -> PB2ExportTraceServiceRequest:
-    return PB2ExportTraceServiceRequest(
+) -> bytes:
+    return bytes(PB2TracesData(
         resource_spans=_encode_resource_spans(sdk_spans)
-    )
+    ))
 
 
 def _encode_resource_spans(
@@ -109,9 +110,9 @@ def _span_flags(parent_span_context: Optional[SpanContext]) -> int:
     return flags
 
 
-def _encode_span(sdk_span: ReadableSpan) -> PB2SPan:
+def _encode_span(sdk_span: ReadableSpan) -> PB2Span:
     span_context = sdk_span.get_span_context()
-    return PB2SPan(
+    return PB2Span(
         trace_id=_encode_trace_id(span_context.trace_id),
         span_id=_encode_span_id(span_context.span_id),
         trace_state=_encode_trace_state(span_context.trace_state),
@@ -133,12 +134,12 @@ def _encode_span(sdk_span: ReadableSpan) -> PB2SPan:
 
 def _encode_events(
     events: Sequence[Event],
-) -> Optional[List[PB2SPan.Event]]:
+) -> Optional[List[PB2SpanEvent]]:
     pb2_events = None
     if events:
         pb2_events = []
         for event in events:
-            encoded_event = PB2SPan.Event(
+            encoded_event = PB2SpanEvent(
                 name=event.name,
                 time_unix_nano=event.timestamp,
                 attributes=_encode_attributes(event.attributes),
@@ -148,12 +149,12 @@ def _encode_events(
     return pb2_events
 
 
-def _encode_links(links: Sequence[Link]) -> Sequence[PB2SPan.Link]:
+def _encode_links(links: Sequence[Link]) -> Sequence[PB2SpanLink]:
     pb2_links = None
     if links:
         pb2_links = []
         for link in links:
-            encoded_link = PB2SPan.Link(
+            encoded_link = PB2SpanLink(
                 trace_id=_encode_trace_id(link.context.trace_id),
                 span_id=_encode_span_id(link.context.span_id),
                 attributes=_encode_attributes(link.attributes),
