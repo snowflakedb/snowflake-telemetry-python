@@ -451,7 +451,7 @@ class TestProtoSerialization(unittest.TestCase):
     @hypothesis.given(logs_data())
     def test_log_data(self, logs_data):
         self.assertEqual(
-            encode_recurse(logs_data, "pb2").SerializeToString(),
+            encode_recurse(logs_data, "pb2").SerializeToString(deterministic=True),
             bytes(encode_recurse(logs_data, "sf"))
         )
 
@@ -459,7 +459,7 @@ class TestProtoSerialization(unittest.TestCase):
     @hypothesis.given(traces_data())
     def test_trace_data(self, traces_data):
         self.assertEqual(
-            encode_recurse(traces_data, "pb2").SerializeToString(),
+            encode_recurse(traces_data, "pb2").SerializeToString(deterministic=True),
             bytes(encode_recurse(traces_data, "sf"))
         )
 
@@ -467,6 +467,6 @@ class TestProtoSerialization(unittest.TestCase):
     @hypothesis.given(metrics_data())
     def test_metrics_data(self, metrics_data):
         self.assertEqual(
-            encode_recurse(metrics_data, "pb2").SerializeToString(),
+            encode_recurse(metrics_data, "pb2").SerializeToString(deterministic=True),
             bytes(encode_recurse(metrics_data, "sf"))
         )
