@@ -1,0 +1,33 @@
+# This test will check that the codegen script is up to date with the latest changes in the telemetry schema.
+
+name: Check Codegen
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "scripts/**"
+      - "src/snowflake/telemetry/_internal/opentelemetry/proto/**"
+      - ".github/workflows/check-codegen.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "scripts/**"
+      - "src/snowflake/telemetry/_internal/opentelemetry/proto/**"
+      - ".github/workflows/check-codegen.yml"
+
+jobs:
+  check-codegen:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    - name: Run codegen script
+      run: |
+        ./scripts/proto_codegen.sh
+    - name: Check for changes
+      run: |
+        git diff --exit-code || { echo "Code generation produced changes! Regenerate the code using ./scripts/proto_codegen.sh"; exit 1; }
