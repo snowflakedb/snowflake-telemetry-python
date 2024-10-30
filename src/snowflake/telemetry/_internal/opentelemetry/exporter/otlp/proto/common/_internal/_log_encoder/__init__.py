@@ -23,20 +23,20 @@ from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._int
     _encode_attributes,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs import (
-    ScopeLogs,
-    ResourceLogs,
-    LogsData,
+    ScopeLogs as MarshalScopeLogs,
+    ResourceLogs as MarshalResourceLogs,
+    LogsData as MarshalLogsData,
+    LogRecord as MarshalLogRecord,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs import LogRecord as PB2LogRecord
 
 from opentelemetry.sdk._logs import LogData
 
 
 def encode_logs(batch: Sequence[LogData]) -> bytes:
-    return bytes(LogsData(resource_logs=_encode_resource_logs(batch))
+    return bytes(MarshalLogsData(resource_logs=_encode_resource_logs(batch))
 )
 
-def _encode_log(log_data: LogData) -> PB2LogRecord:
+def _encode_log(log_data: LogData) -> bytes:
     span_id = (
         None
         if log_data.log_record.span_id == 0
@@ -47,7 +47,7 @@ def _encode_log(log_data: LogData) -> PB2LogRecord:
         if log_data.log_record.trace_id == 0
         else _encode_trace_id(log_data.log_record.trace_id)
     )
-    return PB2LogRecord(
+    return MarshalLogRecord(
         time_unix_nano=log_data.log_record.timestamp,
         observed_time_unix_nano=log_data.log_record.observed_timestamp,
         span_id=span_id,
@@ -61,7 +61,7 @@ def _encode_log(log_data: LogData) -> PB2LogRecord:
     )
 
 
-def _encode_resource_logs(batch: Sequence[LogData]) -> List[ResourceLogs]:
+def _encode_resource_logs(batch: Sequence[LogData]) -> List[bytes]:
     sdk_resource_logs = defaultdict(lambda: defaultdict(list))
 
     for sdk_log in batch:
@@ -77,13 +77,13 @@ def _encode_resource_logs(batch: Sequence[LogData]) -> List[ResourceLogs]:
         scope_logs = []
         for sdk_instrumentation, pb2_logs in sdk_instrumentations.items():
             scope_logs.append(
-                ScopeLogs(
+                MarshalScopeLogs(
                     scope=(_encode_instrumentation_scope(sdk_instrumentation)),
                     log_records=pb2_logs,
                 )
             )
         pb2_resource_logs.append(
-            ResourceLogs(
+            MarshalResourceLogs(
                 resource=_encode_resource(sdk_resource),
                 scope_logs=scope_logs,
                 schema_url=sdk_resource.schema_url,

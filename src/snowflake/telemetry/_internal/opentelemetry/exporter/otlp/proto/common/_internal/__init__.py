@@ -15,32 +15,26 @@
 
 import logging
 from collections.abc import Sequence
-from itertools import count
 from typing import (
     Any,
     Mapping,
     Optional,
     List,
-    Callable,
     TypeVar,
-    Dict,
-    Iterator,
 )
 
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common import (
-    InstrumentationScope as PB2InstrumentationScope,
+    InstrumentationScope as MarshalInstrumentationScope,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource import (
-    Resource as PB2Resource,
-)
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common import AnyValue as PB2AnyValue
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common import KeyValue as PB2KeyValue
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common import (
-    KeyValueList as PB2KeyValueList,
+    Resource as MarshalResource,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common import (
-    ArrayValue as PB2ArrayValue,
+    KeyValueList as MarshalKeyValueList,
+    ArrayValue as MarshalArrayValue,
+    KeyValue as MarshalKeyValue,
+    AnyValue as MarshalAnyValue,
 )
 from opentelemetry.sdk.trace import Resource
 from opentelemetry.util.types import Attributes
@@ -53,43 +47,43 @@ _ResourceDataT = TypeVar("_ResourceDataT")
 
 def _encode_instrumentation_scope(
     instrumentation_scope: InstrumentationScope,
-) -> PB2InstrumentationScope:
+) -> bytes:
     if instrumentation_scope is None:
-        return PB2InstrumentationScope()
-    return PB2InstrumentationScope(
+        return MarshalInstrumentationScope()
+    return MarshalInstrumentationScope(
         name=instrumentation_scope.name,
         version=instrumentation_scope.version,
     )
 
 
-def _encode_resource(resource: Resource) -> PB2Resource:
-    return PB2Resource(attributes=_encode_attributes(resource.attributes))
+def _encode_resource(resource: Resource) -> bytes:
+    return MarshalResource(attributes=_encode_attributes(resource.attributes))
 
 
-def _encode_value(value: Any) -> PB2AnyValue:
+def _encode_value(value: Any) -> bytes:
     if isinstance(value, bool):
-        return PB2AnyValue(bool_value=value)
+        return MarshalAnyValue(bool_value=value)
     if isinstance(value, str):
-        return PB2AnyValue(string_value=value)
+        return MarshalAnyValue(string_value=value)
     if isinstance(value, int):
-        return PB2AnyValue(int_value=value)
+        return MarshalAnyValue(int_value=value)
     if isinstance(value, float):
-        return PB2AnyValue(double_value=value)
+        return MarshalAnyValue(double_value=value)
     if isinstance(value, Sequence):
-        return PB2AnyValue(
-            array_value=PB2ArrayValue(values=[_encode_value(v) for v in value])
+        return MarshalAnyValue(
+            array_value=MarshalArrayValue(values=[_encode_value(v) for v in value])
         )
     elif isinstance(value, Mapping):
-        return PB2AnyValue(
-            kvlist_value=PB2KeyValueList(
+        return MarshalAnyValue(
+            kvlist_value=MarshalKeyValueList(
                 values=[_encode_key_value(str(k), v) for k, v in value.items()]
             )
         )
     raise Exception(f"Invalid type {type(value)} of value {value}")
 
 
-def _encode_key_value(key: str, value: Any) -> PB2KeyValue:
-    return PB2KeyValue(key=key, value=_encode_value(value))
+def _encode_key_value(key: str, value: Any) -> bytes:
+    return MarshalKeyValue(key=key, value=_encode_value(value))
 
 
 def _encode_span_id(span_id: int) -> bytes:
@@ -102,7 +96,7 @@ def _encode_trace_id(trace_id: int) -> bytes:
 
 def _encode_attributes(
     attributes: Attributes,
-) -> Optional[List[PB2KeyValue]]:
+) -> Optional[List[bytes]]:
     if attributes:
         pb2_attributes = []
         for key, value in attributes.items():
