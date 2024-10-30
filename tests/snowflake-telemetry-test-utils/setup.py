@@ -17,11 +17,12 @@ setup(
     install_requires=[
         "pytest >= 7.0.0",
         "snowflake-telemetry-python == 0.6.0.dev",
-        "Jinja2",
-        "grpcio-tools", 
-        "black", 
-        "isort",
+        "opentelemetry-exporter-otlp-proto-common == 1.26.0",
         "hypothesis >= 6.0.0",
+        "Jinja2",
+        "grpcio-tools",
+        "black",
+        "isort",
     ],
     packages=find_namespace_packages(
         where='src'
