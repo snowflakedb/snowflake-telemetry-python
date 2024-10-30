@@ -17,12 +17,16 @@ setup(
     install_requires=[
         "pytest >= 7.0.0",
         "snowflake-telemetry-python == 0.6.0.dev",
+        # Dependencies for test_proto_serialization
         "opentelemetry-exporter-otlp-proto-common == 1.26.0",
         "hypothesis >= 6.0.0",
+        # Dependencies for test_protoc_plugin
         "Jinja2",
         "grpcio-tools",
         "black",
         "isort",
+        # Dependencies for benchmarks
+        "google-benchmark",
     ],
     packages=find_namespace_packages(
         where='src'
