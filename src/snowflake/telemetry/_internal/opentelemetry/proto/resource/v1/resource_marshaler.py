@@ -21,28 +21,36 @@ from snowflake.telemetry._internal.serialize import (
 
 
 class Resource(MessageMarshaler):
+    @property
+    def attributes(self) -> List[KeyValue]:
+        if self._attributes is None:
+            self._attributes = list()
+        return self._attributes
+
+    dropped_attributes_count: int
+
     def __init__(
         self,
         attributes: List[KeyValue] = None,
         dropped_attributes_count: int = 0,
     ):
-        self.attributes: List[KeyValue] = attributes
+        self._attributes: List[KeyValue] = attributes
         self.dropped_attributes_count: int = dropped_attributes_count
 
     def calculate_size(self) -> int:
         size = 0
-        if self.attributes:
+        if self._attributes:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.attributes
+                for message in self._attributes
             )
         if self.dropped_attributes_count:
             size += len(b"\x10") + size_varint32(self.dropped_attributes_count)
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.attributes:
-            for v in self.attributes:
+        if self._attributes:
+            for v in self._attributes:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)

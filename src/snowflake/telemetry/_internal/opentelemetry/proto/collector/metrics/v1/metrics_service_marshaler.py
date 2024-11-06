@@ -21,54 +21,69 @@ from snowflake.telemetry._internal.serialize import (
 
 
 class ExportMetricsServiceRequest(MessageMarshaler):
+    @property
+    def resource_metrics(self) -> List[ResourceMetrics]:
+        if self._resource_metrics is None:
+            self._resource_metrics = list()
+        return self._resource_metrics
+
     def __init__(
         self,
         resource_metrics: List[ResourceMetrics] = None,
     ):
-        self.resource_metrics: List[ResourceMetrics] = resource_metrics
+        self._resource_metrics: List[ResourceMetrics] = resource_metrics
 
     def calculate_size(self) -> int:
         size = 0
-        if self.resource_metrics:
+        if self._resource_metrics:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.resource_metrics
+                for message in self._resource_metrics
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.resource_metrics:
-            for v in self.resource_metrics:
+        if self._resource_metrics:
+            for v in self._resource_metrics:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class ExportMetricsServiceResponse(MessageMarshaler):
+    @property
+    def partial_success(self) -> ExportMetricsPartialSuccess:
+        if self._partial_success is None:
+            self._partial_success = ExportMetricsPartialSuccess()
+        return self._partial_success
+
     def __init__(
         self,
         partial_success: ExportMetricsPartialSuccess = None,
     ):
-        self.partial_success: ExportMetricsPartialSuccess = partial_success
+        self._partial_success: ExportMetricsPartialSuccess = partial_success
 
     def calculate_size(self) -> int:
         size = 0
-        if self.partial_success is not None:
+        if self._partial_success is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self.partial_success._get_size())
-                + self.partial_success._get_size()
+                + size_varint32(self._partial_success._get_size())
+                + self._partial_success._get_size()
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.partial_success is not None:
+        if self._partial_success is not None:
             out += b"\n"
-            write_varint_unsigned(out, self.partial_success._get_size())
-            self.partial_success.write_to(out)
+            write_varint_unsigned(out, self._partial_success._get_size())
+            self._partial_success.write_to(out)
 
 
 class ExportMetricsPartialSuccess(MessageMarshaler):
+    rejected_data_points: int
+    error_message: str
+
     def __init__(
         self,
         rejected_data_points: int = 0,

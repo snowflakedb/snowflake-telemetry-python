@@ -20,6 +20,25 @@ from snowflake.telemetry._internal.serialize import (
 
 
 class AnyValue(MessageMarshaler):
+    string_value: str
+    bool_value: bool
+    int_value: int
+    double_value: float
+
+    @property
+    def array_value(self) -> ArrayValue:
+        if self._array_value is None:
+            self._array_value = ArrayValue()
+        return self._array_value
+
+    @property
+    def kvlist_value(self) -> KeyValueList:
+        if self._kvlist_value is None:
+            self._kvlist_value = KeyValueList()
+        return self._kvlist_value
+
+    bytes_value: bytes
+
     def __init__(
         self,
         string_value: str = None,
@@ -34,8 +53,8 @@ class AnyValue(MessageMarshaler):
         self.bool_value: bool = bool_value
         self.int_value: int = int_value
         self.double_value: float = double_value
-        self.array_value: ArrayValue = array_value
-        self.kvlist_value: KeyValueList = kvlist_value
+        self._array_value: ArrayValue = array_value
+        self._kvlist_value: KeyValueList = kvlist_value
         self.bytes_value: bytes = bytes_value
 
     def calculate_size(self) -> int:
@@ -52,17 +71,17 @@ class AnyValue(MessageMarshaler):
             )
         if self.double_value is not None:
             size += len(b"!") + 8
-        if self.array_value is not None:
+        if self._array_value is not None:
             size += (
                 len(b"*")
-                + size_varint32(self.array_value._get_size())
-                + self.array_value._get_size()
+                + size_varint32(self._array_value._get_size())
+                + self._array_value._get_size()
             )
-        if self.kvlist_value is not None:
+        if self._kvlist_value is not None:
             size += (
                 len(b"2")
-                + size_varint32(self.kvlist_value._get_size())
-                + self.kvlist_value._get_size()
+                + size_varint32(self._kvlist_value._get_size())
+                + self._kvlist_value._get_size()
             )
         if self.bytes_value is not None:
             size += (
@@ -88,14 +107,14 @@ class AnyValue(MessageMarshaler):
         if self.double_value is not None:
             out += b"!"
             out += struct.pack("<d", self.double_value)
-        if self.array_value is not None:
+        if self._array_value is not None:
             out += b"*"
-            write_varint_unsigned(out, self.array_value._get_size())
-            self.array_value.write_to(out)
-        if self.kvlist_value is not None:
+            write_varint_unsigned(out, self._array_value._get_size())
+            self._array_value.write_to(out)
+        if self._kvlist_value is not None:
             out += b"2"
-            write_varint_unsigned(out, self.kvlist_value._get_size())
-            self.kvlist_value.write_to(out)
+            write_varint_unsigned(out, self._kvlist_value._get_size())
+            self._kvlist_value.write_to(out)
         if self.bytes_value is not None:
             out += b":"
             write_varint_unsigned(out, len(self.bytes_value))
@@ -103,61 +122,81 @@ class AnyValue(MessageMarshaler):
 
 
 class ArrayValue(MessageMarshaler):
+    @property
+    def values(self) -> List[AnyValue]:
+        if self._values is None:
+            self._values = list()
+        return self._values
+
     def __init__(
         self,
         values: List[AnyValue] = None,
     ):
-        self.values: List[AnyValue] = values
+        self._values: List[AnyValue] = values
 
     def calculate_size(self) -> int:
         size = 0
-        if self.values:
+        if self._values:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.values
+                for message in self._values
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.values:
-            for v in self.values:
+        if self._values:
+            for v in self._values:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class KeyValueList(MessageMarshaler):
+    @property
+    def values(self) -> List[KeyValue]:
+        if self._values is None:
+            self._values = list()
+        return self._values
+
     def __init__(
         self,
         values: List[KeyValue] = None,
     ):
-        self.values: List[KeyValue] = values
+        self._values: List[KeyValue] = values
 
     def calculate_size(self) -> int:
         size = 0
-        if self.values:
+        if self._values:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.values
+                for message in self._values
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.values:
-            for v in self.values:
+        if self._values:
+            for v in self._values:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class KeyValue(MessageMarshaler):
+    key: str
+
+    @property
+    def value(self) -> AnyValue:
+        if self._value is None:
+            self._value = AnyValue()
+        return self._value
+
     def __init__(
         self,
         key: str = "",
         value: AnyValue = None,
     ):
         self.key: str = key
-        self.value: AnyValue = value
+        self._value: AnyValue = value
 
     def calculate_size(self) -> int:
         size = 0
@@ -165,11 +204,11 @@ class KeyValue(MessageMarshaler):
             v = self.key.encode("utf-8")
             self._key_encoded = v
             size += len(b"\n") + size_varint32(len(v)) + len(v)
-        if self.value is not None:
+        if self._value is not None:
             size += (
                 len(b"\x12")
-                + size_varint32(self.value._get_size())
-                + self.value._get_size()
+                + size_varint32(self._value._get_size())
+                + self._value._get_size()
             )
         return size
 
@@ -179,13 +218,24 @@ class KeyValue(MessageMarshaler):
             out += b"\n"
             write_varint_unsigned(out, len(v))
             out += v
-        if self.value is not None:
+        if self._value is not None:
             out += b"\x12"
-            write_varint_unsigned(out, self.value._get_size())
-            self.value.write_to(out)
+            write_varint_unsigned(out, self._value._get_size())
+            self._value.write_to(out)
 
 
 class InstrumentationScope(MessageMarshaler):
+    name: str
+    version: str
+
+    @property
+    def attributes(self) -> List[KeyValue]:
+        if self._attributes is None:
+            self._attributes = list()
+        return self._attributes
+
+    dropped_attributes_count: int
+
     def __init__(
         self,
         name: str = "",
@@ -195,7 +245,7 @@ class InstrumentationScope(MessageMarshaler):
     ):
         self.name: str = name
         self.version: str = version
-        self.attributes: List[KeyValue] = attributes
+        self._attributes: List[KeyValue] = attributes
         self.dropped_attributes_count: int = dropped_attributes_count
 
     def calculate_size(self) -> int:
@@ -208,10 +258,10 @@ class InstrumentationScope(MessageMarshaler):
             v = self.version.encode("utf-8")
             self._version_encoded = v
             size += len(b"\x12") + size_varint32(len(v)) + len(v)
-        if self.attributes:
+        if self._attributes:
             size += sum(
                 message._get_size() + len(b"\x1a") + size_varint32(message._get_size())
-                for message in self.attributes
+                for message in self._attributes
             )
         if self.dropped_attributes_count:
             size += len(b" ") + size_varint32(self.dropped_attributes_count)
@@ -228,8 +278,8 @@ class InstrumentationScope(MessageMarshaler):
             out += b"\x12"
             write_varint_unsigned(out, len(v))
             out += v
-        if self.attributes:
-            for v in self.attributes:
+        if self._attributes:
+            for v in self._attributes:
                 out += b"\x1a"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)

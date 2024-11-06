@@ -55,52 +55,72 @@ class LogRecordFlags(Enum):
 
 
 class LogsData(MessageMarshaler):
+    @property
+    def resource_logs(self) -> List[ResourceLogs]:
+        if self._resource_logs is None:
+            self._resource_logs = list()
+        return self._resource_logs
+
     def __init__(
         self,
         resource_logs: List[ResourceLogs] = None,
     ):
-        self.resource_logs: List[ResourceLogs] = resource_logs
+        self._resource_logs: List[ResourceLogs] = resource_logs
 
     def calculate_size(self) -> int:
         size = 0
-        if self.resource_logs:
+        if self._resource_logs:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.resource_logs
+                for message in self._resource_logs
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.resource_logs:
-            for v in self.resource_logs:
+        if self._resource_logs:
+            for v in self._resource_logs:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class ResourceLogs(MessageMarshaler):
+    @property
+    def resource(self) -> Resource:
+        if self._resource is None:
+            self._resource = Resource()
+        return self._resource
+
+    @property
+    def scope_logs(self) -> List[ScopeLogs]:
+        if self._scope_logs is None:
+            self._scope_logs = list()
+        return self._scope_logs
+
+    schema_url: str
+
     def __init__(
         self,
         resource: Resource = None,
         scope_logs: List[ScopeLogs] = None,
         schema_url: str = "",
     ):
-        self.resource: Resource = resource
-        self.scope_logs: List[ScopeLogs] = scope_logs
+        self._resource: Resource = resource
+        self._scope_logs: List[ScopeLogs] = scope_logs
         self.schema_url: str = schema_url
 
     def calculate_size(self) -> int:
         size = 0
-        if self.resource is not None:
+        if self._resource is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self.resource._get_size())
-                + self.resource._get_size()
+                + size_varint32(self._resource._get_size())
+                + self._resource._get_size()
             )
-        if self.scope_logs:
+        if self._scope_logs:
             size += sum(
                 message._get_size() + len(b"\x12") + size_varint32(message._get_size())
-                for message in self.scope_logs
+                for message in self._scope_logs
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
@@ -109,12 +129,12 @@ class ResourceLogs(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.resource is not None:
+        if self._resource is not None:
             out += b"\n"
-            write_varint_unsigned(out, self.resource._get_size())
-            self.resource.write_to(out)
-        if self.scope_logs:
-            for v in self.scope_logs:
+            write_varint_unsigned(out, self._resource._get_size())
+            self._resource.write_to(out)
+        if self._scope_logs:
+            for v in self._scope_logs:
                 out += b"\x12"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -126,28 +146,42 @@ class ResourceLogs(MessageMarshaler):
 
 
 class ScopeLogs(MessageMarshaler):
+    @property
+    def scope(self) -> InstrumentationScope:
+        if self._scope is None:
+            self._scope = InstrumentationScope()
+        return self._scope
+
+    @property
+    def log_records(self) -> List[LogRecord]:
+        if self._log_records is None:
+            self._log_records = list()
+        return self._log_records
+
+    schema_url: str
+
     def __init__(
         self,
         scope: InstrumentationScope = None,
         log_records: List[LogRecord] = None,
         schema_url: str = "",
     ):
-        self.scope: InstrumentationScope = scope
-        self.log_records: List[LogRecord] = log_records
+        self._scope: InstrumentationScope = scope
+        self._log_records: List[LogRecord] = log_records
         self.schema_url: str = schema_url
 
     def calculate_size(self) -> int:
         size = 0
-        if self.scope is not None:
+        if self._scope is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self.scope._get_size())
-                + self.scope._get_size()
+                + size_varint32(self._scope._get_size())
+                + self._scope._get_size()
             )
-        if self.log_records:
+        if self._log_records:
             size += sum(
                 message._get_size() + len(b"\x12") + size_varint32(message._get_size())
-                for message in self.log_records
+                for message in self._log_records
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
@@ -156,12 +190,12 @@ class ScopeLogs(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.scope is not None:
+        if self._scope is not None:
             out += b"\n"
-            write_varint_unsigned(out, self.scope._get_size())
-            self.scope.write_to(out)
-        if self.log_records:
-            for v in self.log_records:
+            write_varint_unsigned(out, self._scope._get_size())
+            self._scope.write_to(out)
+        if self._log_records:
+            for v in self._log_records:
                 out += b"\x12"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -173,6 +207,28 @@ class ScopeLogs(MessageMarshaler):
 
 
 class LogRecord(MessageMarshaler):
+    time_unix_nano: int
+    severity_number: int
+    severity_text: str
+
+    @property
+    def body(self) -> AnyValue:
+        if self._body is None:
+            self._body = AnyValue()
+        return self._body
+
+    @property
+    def attributes(self) -> List[KeyValue]:
+        if self._attributes is None:
+            self._attributes = list()
+        return self._attributes
+
+    dropped_attributes_count: int
+    flags: int
+    trace_id: bytes
+    span_id: bytes
+    observed_time_unix_nano: int
+
     def __init__(
         self,
         time_unix_nano: int = 0,
@@ -189,8 +245,8 @@ class LogRecord(MessageMarshaler):
         self.time_unix_nano: int = time_unix_nano
         self.severity_number: int = severity_number
         self.severity_text: str = severity_text
-        self.body: AnyValue = body
-        self.attributes: List[KeyValue] = attributes
+        self._body: AnyValue = body
+        self._attributes: List[KeyValue] = attributes
         self.dropped_attributes_count: int = dropped_attributes_count
         self.flags: int = flags
         self.trace_id: bytes = trace_id
@@ -210,14 +266,16 @@ class LogRecord(MessageMarshaler):
             v = self.severity_text.encode("utf-8")
             self._severity_text_encoded = v
             size += len(b"\x1a") + size_varint32(len(v)) + len(v)
-        if self.body is not None:
+        if self._body is not None:
             size += (
-                len(b"*") + size_varint32(self.body._get_size()) + self.body._get_size()
+                len(b"*")
+                + size_varint32(self._body._get_size())
+                + self._body._get_size()
             )
-        if self.attributes:
+        if self._attributes:
             size += sum(
                 message._get_size() + len(b"2") + size_varint32(message._get_size())
-                for message in self.attributes
+                for message in self._attributes
             )
         if self.dropped_attributes_count:
             size += len(b"8") + size_varint32(self.dropped_attributes_count)
@@ -246,12 +304,12 @@ class LogRecord(MessageMarshaler):
             out += b"\x1a"
             write_varint_unsigned(out, len(v))
             out += v
-        if self.body is not None:
+        if self._body is not None:
             out += b"*"
-            write_varint_unsigned(out, self.body._get_size())
-            self.body.write_to(out)
-        if self.attributes:
-            for v in self.attributes:
+            write_varint_unsigned(out, self._body._get_size())
+            self._body.write_to(out)
+        if self._attributes:
+            for v in self._attributes:
                 out += b"2"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)

@@ -33,52 +33,72 @@ class DataPointFlags(Enum):
 
 
 class MetricsData(MessageMarshaler):
+    @property
+    def resource_metrics(self) -> List[ResourceMetrics]:
+        if self._resource_metrics is None:
+            self._resource_metrics = list()
+        return self._resource_metrics
+
     def __init__(
         self,
         resource_metrics: List[ResourceMetrics] = None,
     ):
-        self.resource_metrics: List[ResourceMetrics] = resource_metrics
+        self._resource_metrics: List[ResourceMetrics] = resource_metrics
 
     def calculate_size(self) -> int:
         size = 0
-        if self.resource_metrics:
+        if self._resource_metrics:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.resource_metrics
+                for message in self._resource_metrics
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.resource_metrics:
-            for v in self.resource_metrics:
+        if self._resource_metrics:
+            for v in self._resource_metrics:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class ResourceMetrics(MessageMarshaler):
+    @property
+    def resource(self) -> Resource:
+        if self._resource is None:
+            self._resource = Resource()
+        return self._resource
+
+    @property
+    def scope_metrics(self) -> List[ScopeMetrics]:
+        if self._scope_metrics is None:
+            self._scope_metrics = list()
+        return self._scope_metrics
+
+    schema_url: str
+
     def __init__(
         self,
         resource: Resource = None,
         scope_metrics: List[ScopeMetrics] = None,
         schema_url: str = "",
     ):
-        self.resource: Resource = resource
-        self.scope_metrics: List[ScopeMetrics] = scope_metrics
+        self._resource: Resource = resource
+        self._scope_metrics: List[ScopeMetrics] = scope_metrics
         self.schema_url: str = schema_url
 
     def calculate_size(self) -> int:
         size = 0
-        if self.resource is not None:
+        if self._resource is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self.resource._get_size())
-                + self.resource._get_size()
+                + size_varint32(self._resource._get_size())
+                + self._resource._get_size()
             )
-        if self.scope_metrics:
+        if self._scope_metrics:
             size += sum(
                 message._get_size() + len(b"\x12") + size_varint32(message._get_size())
-                for message in self.scope_metrics
+                for message in self._scope_metrics
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
@@ -87,12 +107,12 @@ class ResourceMetrics(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.resource is not None:
+        if self._resource is not None:
             out += b"\n"
-            write_varint_unsigned(out, self.resource._get_size())
-            self.resource.write_to(out)
-        if self.scope_metrics:
-            for v in self.scope_metrics:
+            write_varint_unsigned(out, self._resource._get_size())
+            self._resource.write_to(out)
+        if self._scope_metrics:
+            for v in self._scope_metrics:
                 out += b"\x12"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -104,28 +124,42 @@ class ResourceMetrics(MessageMarshaler):
 
 
 class ScopeMetrics(MessageMarshaler):
+    @property
+    def scope(self) -> InstrumentationScope:
+        if self._scope is None:
+            self._scope = InstrumentationScope()
+        return self._scope
+
+    @property
+    def metrics(self) -> List[Metric]:
+        if self._metrics is None:
+            self._metrics = list()
+        return self._metrics
+
+    schema_url: str
+
     def __init__(
         self,
         scope: InstrumentationScope = None,
         metrics: List[Metric] = None,
         schema_url: str = "",
     ):
-        self.scope: InstrumentationScope = scope
-        self.metrics: List[Metric] = metrics
+        self._scope: InstrumentationScope = scope
+        self._metrics: List[Metric] = metrics
         self.schema_url: str = schema_url
 
     def calculate_size(self) -> int:
         size = 0
-        if self.scope is not None:
+        if self._scope is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self.scope._get_size())
-                + self.scope._get_size()
+                + size_varint32(self._scope._get_size())
+                + self._scope._get_size()
             )
-        if self.metrics:
+        if self._metrics:
             size += sum(
                 message._get_size() + len(b"\x12") + size_varint32(message._get_size())
-                for message in self.metrics
+                for message in self._metrics
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
@@ -134,12 +168,12 @@ class ScopeMetrics(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.scope is not None:
+        if self._scope is not None:
             out += b"\n"
-            write_varint_unsigned(out, self.scope._get_size())
-            self.scope.write_to(out)
-        if self.metrics:
-            for v in self.metrics:
+            write_varint_unsigned(out, self._scope._get_size())
+            self._scope.write_to(out)
+        if self._metrics:
+            for v in self._metrics:
                 out += b"\x12"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -151,6 +185,46 @@ class ScopeMetrics(MessageMarshaler):
 
 
 class Metric(MessageMarshaler):
+    name: str
+    description: str
+    unit: str
+
+    @property
+    def gauge(self) -> Gauge:
+        if self._gauge is None:
+            self._gauge = Gauge()
+        return self._gauge
+
+    @property
+    def sum(self) -> Sum:
+        if self._sum is None:
+            self._sum = Sum()
+        return self._sum
+
+    @property
+    def histogram(self) -> Histogram:
+        if self._histogram is None:
+            self._histogram = Histogram()
+        return self._histogram
+
+    @property
+    def exponential_histogram(self) -> ExponentialHistogram:
+        if self._exponential_histogram is None:
+            self._exponential_histogram = ExponentialHistogram()
+        return self._exponential_histogram
+
+    @property
+    def summary(self) -> Summary:
+        if self._summary is None:
+            self._summary = Summary()
+        return self._summary
+
+    @property
+    def metadata(self) -> List[KeyValue]:
+        if self._metadata is None:
+            self._metadata = list()
+        return self._metadata
+
     def __init__(
         self,
         name: str = "",
@@ -166,12 +240,12 @@ class Metric(MessageMarshaler):
         self.name: str = name
         self.description: str = description
         self.unit: str = unit
-        self.gauge: Gauge = gauge
-        self.sum: Sum = sum
-        self.histogram: Histogram = histogram
-        self.exponential_histogram: ExponentialHistogram = exponential_histogram
-        self.summary: Summary = summary
-        self.metadata: List[KeyValue] = metadata
+        self._gauge: Gauge = gauge
+        self._sum: Sum = sum
+        self._histogram: Histogram = histogram
+        self._exponential_histogram: ExponentialHistogram = exponential_histogram
+        self._summary: Summary = summary
+        self._metadata: List[KeyValue] = metadata
 
     def calculate_size(self) -> int:
         size = 0
@@ -187,38 +261,38 @@ class Metric(MessageMarshaler):
             v = self.unit.encode("utf-8")
             self._unit_encoded = v
             size += len(b"\x1a") + size_varint32(len(v)) + len(v)
-        if self.gauge is not None:
+        if self._gauge is not None:
             size += (
                 len(b"*")
-                + size_varint32(self.gauge._get_size())
-                + self.gauge._get_size()
+                + size_varint32(self._gauge._get_size())
+                + self._gauge._get_size()
             )
-        if self.sum is not None:
+        if self._sum is not None:
             size += (
-                len(b":") + size_varint32(self.sum._get_size()) + self.sum._get_size()
+                len(b":") + size_varint32(self._sum._get_size()) + self._sum._get_size()
             )
-        if self.histogram is not None:
+        if self._histogram is not None:
             size += (
                 len(b"J")
-                + size_varint32(self.histogram._get_size())
-                + self.histogram._get_size()
+                + size_varint32(self._histogram._get_size())
+                + self._histogram._get_size()
             )
-        if self.exponential_histogram is not None:
+        if self._exponential_histogram is not None:
             size += (
                 len(b"R")
-                + size_varint32(self.exponential_histogram._get_size())
-                + self.exponential_histogram._get_size()
+                + size_varint32(self._exponential_histogram._get_size())
+                + self._exponential_histogram._get_size()
             )
-        if self.summary is not None:
+        if self._summary is not None:
             size += (
                 len(b"Z")
-                + size_varint32(self.summary._get_size())
-                + self.summary._get_size()
+                + size_varint32(self._summary._get_size())
+                + self._summary._get_size()
             )
-        if self.metadata:
+        if self._metadata:
             size += sum(
                 message._get_size() + len(b"b") + size_varint32(message._get_size())
-                for message in self.metadata
+                for message in self._metadata
             )
         return size
 
@@ -238,74 +312,89 @@ class Metric(MessageMarshaler):
             out += b"\x1a"
             write_varint_unsigned(out, len(v))
             out += v
-        if self.gauge is not None:
+        if self._gauge is not None:
             out += b"*"
-            write_varint_unsigned(out, self.gauge._get_size())
-            self.gauge.write_to(out)
-        if self.sum is not None:
+            write_varint_unsigned(out, self._gauge._get_size())
+            self._gauge.write_to(out)
+        if self._sum is not None:
             out += b":"
-            write_varint_unsigned(out, self.sum._get_size())
-            self.sum.write_to(out)
-        if self.histogram is not None:
+            write_varint_unsigned(out, self._sum._get_size())
+            self._sum.write_to(out)
+        if self._histogram is not None:
             out += b"J"
-            write_varint_unsigned(out, self.histogram._get_size())
-            self.histogram.write_to(out)
-        if self.exponential_histogram is not None:
+            write_varint_unsigned(out, self._histogram._get_size())
+            self._histogram.write_to(out)
+        if self._exponential_histogram is not None:
             out += b"R"
-            write_varint_unsigned(out, self.exponential_histogram._get_size())
-            self.exponential_histogram.write_to(out)
-        if self.summary is not None:
+            write_varint_unsigned(out, self._exponential_histogram._get_size())
+            self._exponential_histogram.write_to(out)
+        if self._summary is not None:
             out += b"Z"
-            write_varint_unsigned(out, self.summary._get_size())
-            self.summary.write_to(out)
-        if self.metadata:
-            for v in self.metadata:
+            write_varint_unsigned(out, self._summary._get_size())
+            self._summary.write_to(out)
+        if self._metadata:
+            for v in self._metadata:
                 out += b"b"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class Gauge(MessageMarshaler):
+    @property
+    def data_points(self) -> List[NumberDataPoint]:
+        if self._data_points is None:
+            self._data_points = list()
+        return self._data_points
+
     def __init__(
         self,
         data_points: List[NumberDataPoint] = None,
     ):
-        self.data_points: List[NumberDataPoint] = data_points
+        self._data_points: List[NumberDataPoint] = data_points
 
     def calculate_size(self) -> int:
         size = 0
-        if self.data_points:
+        if self._data_points:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.data_points
+                for message in self._data_points
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.data_points:
-            for v in self.data_points:
+        if self._data_points:
+            for v in self._data_points:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class Sum(MessageMarshaler):
+    @property
+    def data_points(self) -> List[NumberDataPoint]:
+        if self._data_points is None:
+            self._data_points = list()
+        return self._data_points
+
+    aggregation_temporality: int
+    is_monotonic: bool
+
     def __init__(
         self,
         data_points: List[NumberDataPoint] = None,
         aggregation_temporality: int = 0,
         is_monotonic: bool = False,
     ):
-        self.data_points: List[NumberDataPoint] = data_points
+        self._data_points: List[NumberDataPoint] = data_points
         self.aggregation_temporality: int = aggregation_temporality
         self.is_monotonic: bool = is_monotonic
 
     def calculate_size(self) -> int:
         size = 0
-        if self.data_points:
+        if self._data_points:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.data_points
+                for message in self._data_points
             )
         if self.aggregation_temporality:
             v = self.aggregation_temporality
@@ -317,8 +406,8 @@ class Sum(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.data_points:
-            for v in self.data_points:
+        if self._data_points:
+            for v in self._data_points:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -334,20 +423,28 @@ class Sum(MessageMarshaler):
 
 
 class Histogram(MessageMarshaler):
+    @property
+    def data_points(self) -> List[HistogramDataPoint]:
+        if self._data_points is None:
+            self._data_points = list()
+        return self._data_points
+
+    aggregation_temporality: int
+
     def __init__(
         self,
         data_points: List[HistogramDataPoint] = None,
         aggregation_temporality: int = 0,
     ):
-        self.data_points: List[HistogramDataPoint] = data_points
+        self._data_points: List[HistogramDataPoint] = data_points
         self.aggregation_temporality: int = aggregation_temporality
 
     def calculate_size(self) -> int:
         size = 0
-        if self.data_points:
+        if self._data_points:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.data_points
+                for message in self._data_points
             )
         if self.aggregation_temporality:
             v = self.aggregation_temporality
@@ -357,8 +454,8 @@ class Histogram(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.data_points:
-            for v in self.data_points:
+        if self._data_points:
+            for v in self._data_points:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -371,20 +468,28 @@ class Histogram(MessageMarshaler):
 
 
 class ExponentialHistogram(MessageMarshaler):
+    @property
+    def data_points(self) -> List[ExponentialHistogramDataPoint]:
+        if self._data_points is None:
+            self._data_points = list()
+        return self._data_points
+
+    aggregation_temporality: int
+
     def __init__(
         self,
         data_points: List[ExponentialHistogramDataPoint] = None,
         aggregation_temporality: int = 0,
     ):
-        self.data_points: List[ExponentialHistogramDataPoint] = data_points
+        self._data_points: List[ExponentialHistogramDataPoint] = data_points
         self.aggregation_temporality: int = aggregation_temporality
 
     def calculate_size(self) -> int:
         size = 0
-        if self.data_points:
+        if self._data_points:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.data_points
+                for message in self._data_points
             )
         if self.aggregation_temporality:
             v = self.aggregation_temporality
@@ -394,8 +499,8 @@ class ExponentialHistogram(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.data_points:
-            for v in self.data_points:
+        if self._data_points:
+            for v in self._data_points:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -408,30 +513,56 @@ class ExponentialHistogram(MessageMarshaler):
 
 
 class Summary(MessageMarshaler):
+    @property
+    def data_points(self) -> List[SummaryDataPoint]:
+        if self._data_points is None:
+            self._data_points = list()
+        return self._data_points
+
     def __init__(
         self,
         data_points: List[SummaryDataPoint] = None,
     ):
-        self.data_points: List[SummaryDataPoint] = data_points
+        self._data_points: List[SummaryDataPoint] = data_points
 
     def calculate_size(self) -> int:
         size = 0
-        if self.data_points:
+        if self._data_points:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.data_points
+                for message in self._data_points
             )
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.data_points:
-            for v in self.data_points:
+        if self._data_points:
+            for v in self._data_points:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
 
 
 class NumberDataPoint(MessageMarshaler):
+    start_time_unix_nano: int
+    time_unix_nano: int
+    as_double: float
+
+    @property
+    def exemplars(self) -> List[Exemplar]:
+        if self._exemplars is None:
+            self._exemplars = list()
+        return self._exemplars
+
+    as_int: int
+
+    @property
+    def attributes(self) -> List[KeyValue]:
+        if self._attributes is None:
+            self._attributes = list()
+        return self._attributes
+
+    flags: int
+
     def __init__(
         self,
         start_time_unix_nano: int = 0,
@@ -445,9 +576,9 @@ class NumberDataPoint(MessageMarshaler):
         self.start_time_unix_nano: int = start_time_unix_nano
         self.time_unix_nano: int = time_unix_nano
         self.as_double: float = as_double
-        self.exemplars: List[Exemplar] = exemplars
+        self._exemplars: List[Exemplar] = exemplars
         self.as_int: int = as_int
-        self.attributes: List[KeyValue] = attributes
+        self._attributes: List[KeyValue] = attributes
         self.flags: int = flags
 
     def calculate_size(self) -> int:
@@ -458,17 +589,17 @@ class NumberDataPoint(MessageMarshaler):
             size += len(b"\x19") + 8
         if self.as_double is not None:
             size += len(b"!") + 8
-        if self.exemplars:
+        if self._exemplars:
             size += sum(
                 message._get_size() + len(b"*") + size_varint32(message._get_size())
-                for message in self.exemplars
+                for message in self._exemplars
             )
         if self.as_int is not None:
             size += len(b"1") + 8
-        if self.attributes:
+        if self._attributes:
             size += sum(
                 message._get_size() + len(b":") + size_varint32(message._get_size())
-                for message in self.attributes
+                for message in self._attributes
             )
         if self.flags:
             size += len(b"@") + size_varint32(self.flags)
@@ -484,16 +615,16 @@ class NumberDataPoint(MessageMarshaler):
         if self.as_double is not None:
             out += b"!"
             out += struct.pack("<d", self.as_double)
-        if self.exemplars:
-            for v in self.exemplars:
+        if self._exemplars:
+            for v in self._exemplars:
                 out += b"*"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
         if self.as_int is not None:
             out += b"1"
             out += struct.pack("<q", self.as_int)
-        if self.attributes:
-            for v in self.attributes:
+        if self._attributes:
+            for v in self._attributes:
                 out += b":"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -503,6 +634,39 @@ class NumberDataPoint(MessageMarshaler):
 
 
 class HistogramDataPoint(MessageMarshaler):
+    start_time_unix_nano: int
+    time_unix_nano: int
+    count: int
+    sum: float
+
+    @property
+    def bucket_counts(self) -> List[int]:
+        if self._bucket_counts is None:
+            self._bucket_counts = list()
+        return self._bucket_counts
+
+    @property
+    def explicit_bounds(self) -> List[float]:
+        if self._explicit_bounds is None:
+            self._explicit_bounds = list()
+        return self._explicit_bounds
+
+    @property
+    def exemplars(self) -> List[Exemplar]:
+        if self._exemplars is None:
+            self._exemplars = list()
+        return self._exemplars
+
+    @property
+    def attributes(self) -> List[KeyValue]:
+        if self._attributes is None:
+            self._attributes = list()
+        return self._attributes
+
+    flags: int
+    min: float
+    max: float
+
     def __init__(
         self,
         start_time_unix_nano: int = 0,
@@ -521,10 +685,10 @@ class HistogramDataPoint(MessageMarshaler):
         self.time_unix_nano: int = time_unix_nano
         self.count: int = count
         self.sum: float = sum
-        self.bucket_counts: List[int] = bucket_counts
-        self.explicit_bounds: List[float] = explicit_bounds
-        self.exemplars: List[Exemplar] = exemplars
-        self.attributes: List[KeyValue] = attributes
+        self._bucket_counts: List[int] = bucket_counts
+        self._explicit_bounds: List[float] = explicit_bounds
+        self._exemplars: List[Exemplar] = exemplars
+        self._attributes: List[KeyValue] = attributes
         self.flags: int = flags
         self.min: float = min
         self.max: float = max
@@ -539,27 +703,27 @@ class HistogramDataPoint(MessageMarshaler):
             size += len(b"!") + 8
         if self.sum is not None:
             size += len(b")") + 8
-        if self.bucket_counts:
+        if self._bucket_counts:
             size += (
                 len(b"2")
-                + len(self.bucket_counts) * 8
-                + size_varint32(len(self.bucket_counts) * 8)
+                + len(self._bucket_counts) * 8
+                + size_varint32(len(self._bucket_counts) * 8)
             )
-        if self.explicit_bounds:
+        if self._explicit_bounds:
             size += (
                 len(b":")
-                + len(self.explicit_bounds) * 8
-                + size_varint32(len(self.explicit_bounds) * 8)
+                + len(self._explicit_bounds) * 8
+                + size_varint32(len(self._explicit_bounds) * 8)
             )
-        if self.exemplars:
+        if self._exemplars:
             size += sum(
                 message._get_size() + len(b"B") + size_varint32(message._get_size())
-                for message in self.exemplars
+                for message in self._exemplars
             )
-        if self.attributes:
+        if self._attributes:
             size += sum(
                 message._get_size() + len(b"J") + size_varint32(message._get_size())
-                for message in self.attributes
+                for message in self._attributes
             )
         if self.flags:
             size += len(b"P") + size_varint32(self.flags)
@@ -582,23 +746,23 @@ class HistogramDataPoint(MessageMarshaler):
         if self.sum is not None:
             out += b")"
             out += struct.pack("<d", self.sum)
-        if self.bucket_counts:
+        if self._bucket_counts:
             out += b"2"
-            write_varint_unsigned(out, len(self.bucket_counts) * 8)
-            for v in self.bucket_counts:
+            write_varint_unsigned(out, len(self._bucket_counts) * 8)
+            for v in self._bucket_counts:
                 out += struct.pack("<Q", v)
-        if self.explicit_bounds:
+        if self._explicit_bounds:
             out += b":"
-            write_varint_unsigned(out, len(self.explicit_bounds) * 8)
-            for v in self.explicit_bounds:
+            write_varint_unsigned(out, len(self._explicit_bounds) * 8)
+            for v in self._explicit_bounds:
                 out += struct.pack("<d", v)
-        if self.exemplars:
-            for v in self.exemplars:
+        if self._exemplars:
+            for v in self._exemplars:
                 out += b"B"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
-        if self.attributes:
-            for v in self.attributes:
+        if self._attributes:
+            for v in self._attributes:
                 out += b"J"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -614,6 +778,43 @@ class HistogramDataPoint(MessageMarshaler):
 
 
 class ExponentialHistogramDataPoint(MessageMarshaler):
+    @property
+    def attributes(self) -> List[KeyValue]:
+        if self._attributes is None:
+            self._attributes = list()
+        return self._attributes
+
+    start_time_unix_nano: int
+    time_unix_nano: int
+    count: int
+    sum: float
+    scale: int
+    zero_count: int
+
+    @property
+    def positive(self) -> ExponentialHistogramDataPoint.Buckets:
+        if self._positive is None:
+            self._positive = ExponentialHistogramDataPoint.Buckets()
+        return self._positive
+
+    @property
+    def negative(self) -> ExponentialHistogramDataPoint.Buckets:
+        if self._negative is None:
+            self._negative = ExponentialHistogramDataPoint.Buckets()
+        return self._negative
+
+    flags: int
+
+    @property
+    def exemplars(self) -> List[Exemplar]:
+        if self._exemplars is None:
+            self._exemplars = list()
+        return self._exemplars
+
+    min: float
+    max: float
+    zero_threshold: float
+
     def __init__(
         self,
         attributes: List[KeyValue] = None,
@@ -631,27 +832,27 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
         max: float = None,
         zero_threshold: float = 0.0,
     ):
-        self.attributes: List[KeyValue] = attributes
+        self._attributes: List[KeyValue] = attributes
         self.start_time_unix_nano: int = start_time_unix_nano
         self.time_unix_nano: int = time_unix_nano
         self.count: int = count
         self.sum: float = sum
         self.scale: int = scale
         self.zero_count: int = zero_count
-        self.positive: ExponentialHistogramDataPoint.Buckets = positive
-        self.negative: ExponentialHistogramDataPoint.Buckets = negative
+        self._positive: ExponentialHistogramDataPoint.Buckets = positive
+        self._negative: ExponentialHistogramDataPoint.Buckets = negative
         self.flags: int = flags
-        self.exemplars: List[Exemplar] = exemplars
+        self._exemplars: List[Exemplar] = exemplars
         self.min: float = min
         self.max: float = max
         self.zero_threshold: float = zero_threshold
 
     def calculate_size(self) -> int:
         size = 0
-        if self.attributes:
+        if self._attributes:
             size += sum(
                 message._get_size() + len(b"\n") + size_varint32(message._get_size())
-                for message in self.attributes
+                for message in self._attributes
             )
         if self.start_time_unix_nano:
             size += len(b"\x11") + 8
@@ -667,24 +868,24 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
             )
         if self.zero_count:
             size += len(b"9") + 8
-        if self.positive is not None:
+        if self._positive is not None:
             size += (
                 len(b"B")
-                + size_varint32(self.positive._get_size())
-                + self.positive._get_size()
+                + size_varint32(self._positive._get_size())
+                + self._positive._get_size()
             )
-        if self.negative is not None:
+        if self._negative is not None:
             size += (
                 len(b"J")
-                + size_varint32(self.negative._get_size())
-                + self.negative._get_size()
+                + size_varint32(self._negative._get_size())
+                + self._negative._get_size()
             )
         if self.flags:
             size += len(b"P") + size_varint32(self.flags)
-        if self.exemplars:
+        if self._exemplars:
             size += sum(
                 message._get_size() + len(b"Z") + size_varint32(message._get_size())
-                for message in self.exemplars
+                for message in self._exemplars
             )
         if self.min is not None:
             size += len(b"a") + 8
@@ -695,8 +896,8 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
         return size
 
     def write_to(self, out: BytesIO) -> None:
-        if self.attributes:
-            for v in self.attributes:
+        if self._attributes:
+            for v in self._attributes:
                 out += b"\n"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -720,19 +921,19 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
         if self.zero_count:
             out += b"9"
             out += struct.pack("<Q", self.zero_count)
-        if self.positive is not None:
+        if self._positive is not None:
             out += b"B"
-            write_varint_unsigned(out, self.positive._get_size())
-            self.positive.write_to(out)
-        if self.negative is not None:
+            write_varint_unsigned(out, self._positive._get_size())
+            self._positive.write_to(out)
+        if self._negative is not None:
             out += b"J"
-            write_varint_unsigned(out, self.negative._get_size())
-            self.negative.write_to(out)
+            write_varint_unsigned(out, self._negative._get_size())
+            self._negative.write_to(out)
         if self.flags:
             out += b"P"
             write_varint_unsigned(out, self.flags)
-        if self.exemplars:
-            for v in self.exemplars:
+        if self._exemplars:
+            for v in self._exemplars:
                 out += b"Z"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -747,13 +948,21 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
             out += struct.pack("<d", self.zero_threshold)
 
     class Buckets(MessageMarshaler):
+        offset: int
+
+        @property
+        def bucket_counts(self) -> List[int]:
+            if self._bucket_counts is None:
+                self._bucket_counts = list()
+            return self._bucket_counts
+
         def __init__(
             self,
             offset: int = 0,
             bucket_counts: List[int] = None,
         ):
             self.offset: int = offset
-            self.bucket_counts: List[int] = bucket_counts
+            self._bucket_counts: List[int] = bucket_counts
 
         def calculate_size(self) -> int:
             size = 0
@@ -761,9 +970,9 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
                 size += len(b"\x08") + size_varint32(
                     self.offset << 1 if self.offset >= 0 else (self.offset << 1) ^ (~0)
                 )
-            if self.bucket_counts:
-                s = sum(size_varint64(uint32) for uint32 in self.bucket_counts)
-                self._bucket_counts_size = s
+            if self._bucket_counts:
+                s = sum(size_varint64(uint32) for uint32 in self._bucket_counts)
+                self.__bucket_counts_size = s
                 size += len(b"\x12") + s + size_varint32(s)
             return size
 
@@ -774,14 +983,33 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
                     out,
                     self.offset << 1 if self.offset >= 0 else (self.offset << 1) ^ (~0),
                 )
-            if self.bucket_counts:
+            if self._bucket_counts:
                 out += b"\x12"
-                write_varint_unsigned(out, self._bucket_counts_size)
-                for v in self.bucket_counts:
+                write_varint_unsigned(out, self.__bucket_counts_size)
+                for v in self._bucket_counts:
                     write_varint_unsigned(out, v)
 
 
 class SummaryDataPoint(MessageMarshaler):
+    start_time_unix_nano: int
+    time_unix_nano: int
+    count: int
+    sum: float
+
+    @property
+    def quantile_values(self) -> List[SummaryDataPoint.ValueAtQuantile]:
+        if self._quantile_values is None:
+            self._quantile_values = list()
+        return self._quantile_values
+
+    @property
+    def attributes(self) -> List[KeyValue]:
+        if self._attributes is None:
+            self._attributes = list()
+        return self._attributes
+
+    flags: int
+
     def __init__(
         self,
         start_time_unix_nano: int = 0,
@@ -796,8 +1024,8 @@ class SummaryDataPoint(MessageMarshaler):
         self.time_unix_nano: int = time_unix_nano
         self.count: int = count
         self.sum: float = sum
-        self.quantile_values: List[SummaryDataPoint.ValueAtQuantile] = quantile_values
-        self.attributes: List[KeyValue] = attributes
+        self._quantile_values: List[SummaryDataPoint.ValueAtQuantile] = quantile_values
+        self._attributes: List[KeyValue] = attributes
         self.flags: int = flags
 
     def calculate_size(self) -> int:
@@ -810,15 +1038,15 @@ class SummaryDataPoint(MessageMarshaler):
             size += len(b"!") + 8
         if self.sum:
             size += len(b")") + 8
-        if self.quantile_values:
+        if self._quantile_values:
             size += sum(
                 message._get_size() + len(b"2") + size_varint32(message._get_size())
-                for message in self.quantile_values
+                for message in self._quantile_values
             )
-        if self.attributes:
+        if self._attributes:
             size += sum(
                 message._get_size() + len(b":") + size_varint32(message._get_size())
-                for message in self.attributes
+                for message in self._attributes
             )
         if self.flags:
             size += len(b"@") + size_varint32(self.flags)
@@ -837,13 +1065,13 @@ class SummaryDataPoint(MessageMarshaler):
         if self.sum:
             out += b")"
             out += struct.pack("<d", self.sum)
-        if self.quantile_values:
-            for v in self.quantile_values:
+        if self._quantile_values:
+            for v in self._quantile_values:
                 out += b"2"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
-        if self.attributes:
-            for v in self.attributes:
+        if self._attributes:
+            for v in self._attributes:
                 out += b":"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)
@@ -852,6 +1080,9 @@ class SummaryDataPoint(MessageMarshaler):
             write_varint_unsigned(out, self.flags)
 
     class ValueAtQuantile(MessageMarshaler):
+        quantile: float
+        value: float
+
         def __init__(
             self,
             quantile: float = 0.0,
@@ -878,6 +1109,18 @@ class SummaryDataPoint(MessageMarshaler):
 
 
 class Exemplar(MessageMarshaler):
+    time_unix_nano: int
+    as_double: float
+    span_id: bytes
+    trace_id: bytes
+    as_int: int
+
+    @property
+    def filtered_attributes(self) -> List[KeyValue]:
+        if self._filtered_attributes is None:
+            self._filtered_attributes = list()
+        return self._filtered_attributes
+
     def __init__(
         self,
         time_unix_nano: int = 0,
@@ -892,7 +1135,7 @@ class Exemplar(MessageMarshaler):
         self.span_id: bytes = span_id
         self.trace_id: bytes = trace_id
         self.as_int: int = as_int
-        self.filtered_attributes: List[KeyValue] = filtered_attributes
+        self._filtered_attributes: List[KeyValue] = filtered_attributes
 
     def calculate_size(self) -> int:
         size = 0
@@ -906,10 +1149,10 @@ class Exemplar(MessageMarshaler):
             size += len(b"*") + size_varint32(len(self.trace_id)) + len(self.trace_id)
         if self.as_int is not None:
             size += len(b"1") + 8
-        if self.filtered_attributes:
+        if self._filtered_attributes:
             size += sum(
                 message._get_size() + len(b":") + size_varint32(message._get_size())
-                for message in self.filtered_attributes
+                for message in self._filtered_attributes
             )
         return size
 
@@ -931,8 +1174,8 @@ class Exemplar(MessageMarshaler):
         if self.as_int is not None:
             out += b"1"
             out += struct.pack("<q", self.as_int)
-        if self.filtered_attributes:
-            for v in self.filtered_attributes:
+        if self._filtered_attributes:
+            for v in self._filtered_attributes:
                 out += b":"
                 write_varint_unsigned(out, v._get_size())
                 v.write_to(out)

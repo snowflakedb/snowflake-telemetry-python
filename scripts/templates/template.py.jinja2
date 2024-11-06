@@ -27,6 +27,19 @@ class {{ enum.name }}(Enum):
 
 {% macro render_message(message) %}
 class {{ message.name }}(MessageMarshaler):
+
+{%- for field in message.fields %}
+{%- if field.generator %}
+    @property
+    def {{ field.name }}(self) -> {{ field.python_type }}:
+        if self.{{ field.attr_name }} is None:
+            self.{{ field.attr_name }} = {{ field.generator }}
+        return self.{{ field.attr_name }}
+{%- else %}
+    {{ field.name }}: {{ field.python_type }}
+{%- endif %}
+{%- endfor %}
+
     def __init__(
         self,
 {%- for field in message.fields %}
@@ -34,7 +47,7 @@ class {{ message.name }}(MessageMarshaler):
 {%- endfor %}
     ):
 {%- for field in message.fields %}
-        self.{{ field.name }}: {{ field.python_type }} = {{ field.name }}
+        self.{{ field.attr_name }}: {{ field.python_type }} = {{ field.name }}
 {%- endfor %}
 
     def calculate_size(self) -> int:

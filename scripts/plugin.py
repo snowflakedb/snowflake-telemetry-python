@@ -319,6 +319,8 @@ def tag_to_repr_varint(tag: int) -> str:
 @dataclass
 class FieldTemplate:
     name: str
+    attr_name: str
+    generator: str
     number: int
     tag: str
     python_type: str
@@ -368,15 +370,33 @@ class FieldTemplate:
             # The default value for oneof fields must be None, so that the default value is not encoded
             default_val = "None"
 
+        field_name = descriptor.name
+        attr_name = field_name
+        generator = None
+        if proto_type == "message" or repeated:
+            # For message and repeated fields, store as a private attribute that is
+            # initialized on access to match protobuf embedded message access pattern
+            if repeated:
+                # In python protobuf, repeated fields return an implementation of the list interface 
+                # with a self.add() method to add and initialize elements
+                # This can be supported with a custom list implementation, but we use a simple list for now
+                # https://protobuf.dev/reference/python/python-generated/#repeated-message-fields
+                generator = "list()"
+            else:
+                # https://protobuf.dev/reference/python/python-generated/#embedded_message
+                generator = f"{python_type}()"
+            attr_name = f"_{field_name}"
+
         # Inline the size and serialization functions for the field
-        name = descriptor.name
-        serialize_field_inline = inline_serialize_function(proto_type, name, tag)
-        serialize_field_inline = add_presence_check(encode_presence, name, serialize_field_inline)
-        size_field_inline = inline_size_function(proto_type, name, tag)
-        size_field_inline = add_presence_check(encode_presence, name, size_field_inline)
+        serialize_field_inline = inline_serialize_function(proto_type, attr_name, tag)
+        serialize_field_inline = add_presence_check(encode_presence, attr_name, serialize_field_inline)
+        size_field_inline = inline_size_function(proto_type, attr_name, tag)
+        size_field_inline = add_presence_check(encode_presence, attr_name, size_field_inline)
 
         return FieldTemplate(
-            name=name,
+            name=field_name,
+            attr_name=attr_name,
+            generator=generator,
             tag=tag,
             number=descriptor.number,
             python_type=python_type,
