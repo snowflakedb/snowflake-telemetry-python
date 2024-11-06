@@ -426,11 +426,11 @@ class FileTemplate:
         # Extract the import paths for the proto file
         imports = []
         for dependency in descriptor.dependency:
-            path = re.sub(r"/[a-zA-Z0-9_]+\.proto$", "", dependency)
+            path = re.sub(r"\.proto$", "", dependency)
             if descriptor.name.startswith(path):
                 continue
             path = path.replace("/", ".")
-            path = "snowflake.telemetry._internal." + path
+            path = "snowflake.telemetry._internal." + path + "_marshaler"
             imports.append(path)
 
         return FileTemplate(
@@ -453,7 +453,7 @@ def main():
     jinja_body_template = template_env.get_template("template.py.jinja2")
 
     for proto_file in request.proto_file:
-        file_name = re.sub(r"[a-zA-Z0-9_]+\.proto$", "__init__.py", proto_file.name)
+        file_name = re.sub(r"\.proto$", "_marshaler.py", proto_file.name)
         file_descriptor_proto = proto_file
 
         file_template = FileTemplate.from_descriptor(file_descriptor_proto)

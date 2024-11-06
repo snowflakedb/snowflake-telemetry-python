@@ -13,11 +13,11 @@ import opentelemetry.proto.common.v1.common_pb2 as common_pb2
 import opentelemetry.proto.metrics.v1.metrics_pb2 as metrics_pb2
 import opentelemetry.proto.resource.v1.resource_pb2 as resource_pb2
 
-import snowflake.telemetry._internal.opentelemetry.proto.logs.v1 as logs_sf
-import snowflake.telemetry._internal.opentelemetry.proto.trace.v1 as trace_sf
-import snowflake.telemetry._internal.opentelemetry.proto.common.v1 as common_sf
-import snowflake.telemetry._internal.opentelemetry.proto.metrics.v1 as metrics_sf
-import snowflake.telemetry._internal.opentelemetry.proto.resource.v1 as resource_sf
+import snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler as logs_sf
+import snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler as trace_sf
+import snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler as common_sf
+import snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_marshaler as metrics_sf
+import snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler as resource_sf
 
 # Strategy for generating protobuf types
 def pb_uint32(): return integers(min_value=0, max_value=2**32-1)

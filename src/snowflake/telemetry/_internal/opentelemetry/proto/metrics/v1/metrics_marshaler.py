@@ -10,8 +10,8 @@ from typing import (
     Optional,
 )
 
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1 import *
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1 import *
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import *
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import *
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,
