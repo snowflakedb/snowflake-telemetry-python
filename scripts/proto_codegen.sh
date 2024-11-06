@@ -31,7 +31,10 @@ trap cleanup EXIT
 echo "Creating temporary virtualenv at $venv_dir using $(python3 --version)"
 python3 -m venv $venv_dir
 source $venv_dir/bin/activate
-python -m pip install protobuf Jinja2 grpcio-tools black isort .
+python -m pip install \
+    -c $repo_root/gen-requirements.txt \
+    protobuf Jinja2 grpcio-tools black isort .
+
 echo 'python -m grpc_tools.protoc --version'
 python -m grpc_tools.protoc --version
 
