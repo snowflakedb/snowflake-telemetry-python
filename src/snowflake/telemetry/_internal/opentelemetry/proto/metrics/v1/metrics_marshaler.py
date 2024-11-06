@@ -376,17 +376,17 @@ class Sum(MessageMarshaler):
             self._data_points = list()
         return self._data_points
 
-    aggregation_temporality: int
+    aggregation_temporality: AggregationTemporality
     is_monotonic: bool
 
     def __init__(
         self,
         data_points: List[NumberDataPoint] = None,
-        aggregation_temporality: int = 0,
+        aggregation_temporality: AggregationTemporality = 0,
         is_monotonic: bool = False,
     ):
         self._data_points: List[NumberDataPoint] = data_points
-        self.aggregation_temporality: int = aggregation_temporality
+        self.aggregation_temporality: AggregationTemporality = aggregation_temporality
         self.is_monotonic: bool = is_monotonic
 
     def calculate_size(self) -> int:
@@ -399,7 +399,7 @@ class Sum(MessageMarshaler):
         if self.aggregation_temporality:
             v = self.aggregation_temporality
             if not isinstance(v, int):
-                v = v.self.aggregation_temporality
+                v = v.value
             size += len(b"\x10") + size_varint32(v)
         if self.is_monotonic:
             size += len(b"\x18") + 1
@@ -414,7 +414,7 @@ class Sum(MessageMarshaler):
         if self.aggregation_temporality:
             v = self.aggregation_temporality
             if not isinstance(v, int):
-                v = v.self.aggregation_temporality
+                v = v.value
             out += b"\x10"
             write_varint_unsigned(out, v)
         if self.is_monotonic:
@@ -429,15 +429,15 @@ class Histogram(MessageMarshaler):
             self._data_points = list()
         return self._data_points
 
-    aggregation_temporality: int
+    aggregation_temporality: AggregationTemporality
 
     def __init__(
         self,
         data_points: List[HistogramDataPoint] = None,
-        aggregation_temporality: int = 0,
+        aggregation_temporality: AggregationTemporality = 0,
     ):
         self._data_points: List[HistogramDataPoint] = data_points
-        self.aggregation_temporality: int = aggregation_temporality
+        self.aggregation_temporality: AggregationTemporality = aggregation_temporality
 
     def calculate_size(self) -> int:
         size = 0
@@ -449,7 +449,7 @@ class Histogram(MessageMarshaler):
         if self.aggregation_temporality:
             v = self.aggregation_temporality
             if not isinstance(v, int):
-                v = v.self.aggregation_temporality
+                v = v.value
             size += len(b"\x10") + size_varint32(v)
         return size
 
@@ -462,7 +462,7 @@ class Histogram(MessageMarshaler):
         if self.aggregation_temporality:
             v = self.aggregation_temporality
             if not isinstance(v, int):
-                v = v.self.aggregation_temporality
+                v = v.value
             out += b"\x10"
             write_varint_unsigned(out, v)
 
@@ -474,15 +474,15 @@ class ExponentialHistogram(MessageMarshaler):
             self._data_points = list()
         return self._data_points
 
-    aggregation_temporality: int
+    aggregation_temporality: AggregationTemporality
 
     def __init__(
         self,
         data_points: List[ExponentialHistogramDataPoint] = None,
-        aggregation_temporality: int = 0,
+        aggregation_temporality: AggregationTemporality = 0,
     ):
         self._data_points: List[ExponentialHistogramDataPoint] = data_points
-        self.aggregation_temporality: int = aggregation_temporality
+        self.aggregation_temporality: AggregationTemporality = aggregation_temporality
 
     def calculate_size(self) -> int:
         size = 0
@@ -494,7 +494,7 @@ class ExponentialHistogram(MessageMarshaler):
         if self.aggregation_temporality:
             v = self.aggregation_temporality
             if not isinstance(v, int):
-                v = v.self.aggregation_temporality
+                v = v.value
             size += len(b"\x10") + size_varint32(v)
         return size
 
@@ -507,7 +507,7 @@ class ExponentialHistogram(MessageMarshaler):
         if self.aggregation_temporality:
             v = self.aggregation_temporality
             if not isinstance(v, int):
-                v = v.self.aggregation_temporality
+                v = v.value
             out += b"\x10"
             write_varint_unsigned(out, v)
 

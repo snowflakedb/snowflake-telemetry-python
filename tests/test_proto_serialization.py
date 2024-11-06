@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 
 from dataclasses import dataclass
@@ -41,9 +43,10 @@ def pb_sfixed32(): return pb_int32()
 def pb_bool(): return booleans()
 def pb_string(): return text(max_size=20)
 def pb_bytes(): return binary(max_size=20)
-def pb_enum(enum): 
-    # TODO: Need to sample from the enum members, not the enum itself
-    return sampled_from([member.value for member in enum])
+def draw_pb_enum(draw, enum: EncodeStrategy): 
+    # Sample int val of enum, will be converted to member in encode_recurse
+    # Sample from pb2 values as it is the source of truth
+    return draw(sampled_from([member for member in enum.pb2.values()]))
 def pb_repeated(type): return lists(type, max_size=3) # limit the size of the repeated field to speed up testing
 def pb_span_id(): return binary(min_size=8, max_size=8)
 def pb_trace_id(): return binary(min_size=16, max_size=16)
@@ -66,6 +69,7 @@ LogRecord = EncodeStrategy(pb2=logs_pb2.LogRecord, sf=logs_sf.LogRecord)
 ScopeLogs = EncodeStrategy(pb2=logs_pb2.ScopeLogs, sf=logs_sf.ScopeLogs)
 ResourceLogs = EncodeStrategy(pb2=logs_pb2.ResourceLogs, sf=logs_sf.ResourceLogs)
 LogsData = EncodeStrategy(pb2=logs_pb2.LogsData, sf=logs_sf.LogsData)
+SeverityNumber = EncodeStrategy(pb2=logs_pb2.SeverityNumber, sf=logs_sf.SeverityNumber)
 
 TracesData = EncodeStrategy(pb2=trace_pb2.TracesData, sf=trace_sf.TracesData)
 ScopeSpans = EncodeStrategy(pb2=trace_pb2.ScopeSpans, sf=trace_sf.ScopeSpans)
@@ -74,6 +78,8 @@ Span = EncodeStrategy(pb2=trace_pb2.Span, sf=trace_sf.Span)
 Event = EncodeStrategy(pb2=trace_pb2.Span.Event, sf=trace_sf.Span.Event)
 Link = EncodeStrategy(pb2=trace_pb2.Span.Link, sf=trace_sf.Span.Link)
 Status = EncodeStrategy(pb2=trace_pb2.Status, sf=trace_sf.Status)
+SpanKind = EncodeStrategy(pb2=trace_pb2.Span.SpanKind, sf=trace_sf.Span.SpanKind)
+StatusCode = EncodeStrategy(pb2=trace_pb2.Status.StatusCode, sf=trace_sf.Status.StatusCode)
 
 Metric = EncodeStrategy(pb2=metrics_pb2.Metric, sf=metrics_sf.Metric)
 ScopeMetrics = EncodeStrategy(pb2=metrics_pb2.ScopeMetrics, sf=metrics_sf.ScopeMetrics)
@@ -91,12 +97,18 @@ ExponentialHistogramDataPoint = EncodeStrategy(pb2=metrics_pb2.ExponentialHistog
 SummaryDataPoint = EncodeStrategy(pb2=metrics_pb2.SummaryDataPoint, sf=metrics_sf.SummaryDataPoint)
 ValueAtQuantile = EncodeStrategy(pb2=metrics_pb2.SummaryDataPoint.ValueAtQuantile, sf=metrics_sf.SummaryDataPoint.ValueAtQuantile)
 Buckets = EncodeStrategy(pb2=metrics_pb2.ExponentialHistogramDataPoint.Buckets, sf=metrics_sf.ExponentialHistogramDataPoint.Buckets)
-
+AggregationTemporality = EncodeStrategy(pb2=metrics_pb2.AggregationTemporality, sf=metrics_sf.AggregationTemporality)
 
 # Package the protobuf type with its arguments for serialization
 @dataclass
 class EncodeWithArgs:
     kwargs: Dict[str, Any]
+    cls: EncodeStrategy
+
+# Package enum value with their serialization strategies
+@dataclass
+class EncodeEnumWithVal:
+    val: int
     cls: EncodeStrategy
 
 # Strategies for generating opentelemetry-proto types
@@ -162,7 +174,7 @@ def logs_data(draw):
         return EncodeWithArgs({
             "time_unix_nano": draw(pb_fixed64()),
             "observed_time_unix_nano": draw(pb_fixed64()),
-            "severity_number": draw(pb_enum(logs_sf.SeverityNumber)),
+            "severity_number": draw_pb_enum(draw, SeverityNumber),
             "severity_text": draw(pb_string()),
             "body": draw(any_value()),
             "attributes": draw(pb_repeated(key_value())),
@@ -217,7 +229,7 @@ def traces_data(draw):
     @composite
     def status(draw):
         return EncodeWithArgs({
-            "code": draw(pb_enum(trace_sf.Status.StatusCode)),
+            "code": draw_pb_enum(draw, StatusCode),
             "message": draw(pb_string()),
         }, Status)
     
@@ -229,7 +241,7 @@ def traces_data(draw):
             "trace_state": draw(pb_string()),
             "parent_span_id": draw(pb_span_id()),
             "name": draw(pb_string()),
-            "kind": draw(pb_enum(trace_sf.Span.SpanKind)),
+            "kind": draw_pb_enum(draw, SpanKind),
             "start_time_unix_nano": draw(pb_fixed64()),
             "end_time_unix_nano": draw(pb_fixed64()),
             "attributes": draw(pb_repeated(key_value())),
@@ -365,21 +377,21 @@ def metrics_data(draw):
     def exponential_histogram(draw):
         return EncodeWithArgs({
             "data_points": draw(pb_repeated(exponential_histogram_data_point())),
-            "aggregation_temporality": draw(pb_enum(metrics_sf.AggregationTemporality)),
+            "aggregation_temporality": draw_pb_enum(draw, AggregationTemporality),
         }, ExponentialHistogram)
     
     @composite
     def histogram(draw):
         return EncodeWithArgs({
             "data_points": draw(pb_repeated(histogram_data_point())),
-            "aggregation_temporality": draw(pb_enum(metrics_sf.AggregationTemporality)),
+            "aggregation_temporality": draw_pb_enum(draw, AggregationTemporality),
         }, Histogram)
     
     @composite
     def sum(draw):
         return EncodeWithArgs({
             "data_points": draw(pb_repeated(number_data_point())),
-            "aggregation_temporality": draw(pb_enum(metrics_sf.AggregationTemporality)),
+            "aggregation_temporality": draw_pb_enum(draw, AggregationTemporality),
             "is_monotonic": draw(pb_bool()),
         }, Sum)
     
@@ -431,15 +443,25 @@ def metrics_data(draw):
     }, MetricsData)
 
 
-# Helper function to recursively encode protobuf types using the generated args 
+# Helper functions to recursively encode protobuf types using the generated args 
 # and the given serialization strategy
+def encode_enum(enum: EncodeEnumWithVal, strategy: str) -> Any:
+    if strategy == "pb2":
+        return enum.cls.pb2(enum.val)
+    elif strategy == "sf":
+        return enum.cls.sf(enum.val)
+
 def encode_recurse(obj: EncodeWithArgs, strategy: str) -> Any:
     kwargs = {}
     for key, value in obj.kwargs.items():
         if isinstance(value, EncodeWithArgs):
             kwargs[key] = encode_recurse(value, strategy)
+        elif isinstance(value, EncodeEnumWithVal):
+            kwargs[key] = encode_enum(value, strategy)
         elif isinstance(value, list) and value and isinstance(value[0], EncodeWithArgs):
             kwargs[key] = [encode_recurse(v, strategy) for v in value]
+        elif isinstance(value, list) and value and isinstance(value[0], EncodeEnumWithVal):
+            kwargs[key] = [encode_enum(v, strategy) for v in value]
         else:
             kwargs[key] = value
     if strategy == "pb2":

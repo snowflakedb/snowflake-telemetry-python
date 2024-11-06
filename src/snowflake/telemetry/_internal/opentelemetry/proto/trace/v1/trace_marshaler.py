@@ -186,7 +186,7 @@ class Span(MessageMarshaler):
     trace_state: str
     parent_span_id: bytes
     name: str
-    kind: int
+    kind: Span.SpanKind
     start_time_unix_nano: int
     end_time_unix_nano: int
 
@@ -229,7 +229,7 @@ class Span(MessageMarshaler):
         trace_state: str = "",
         parent_span_id: bytes = b"",
         name: str = "",
-        kind: int = 0,
+        kind: Span.SpanKind = 0,
         start_time_unix_nano: int = 0,
         end_time_unix_nano: int = 0,
         attributes: List[KeyValue] = None,
@@ -246,7 +246,7 @@ class Span(MessageMarshaler):
         self.trace_state: str = trace_state
         self.parent_span_id: bytes = parent_span_id
         self.name: str = name
-        self.kind: int = kind
+        self.kind: Span.SpanKind = kind
         self.start_time_unix_nano: int = start_time_unix_nano
         self.end_time_unix_nano: int = end_time_unix_nano
         self._attributes: List[KeyValue] = attributes
@@ -281,7 +281,7 @@ class Span(MessageMarshaler):
         if self.kind:
             v = self.kind
             if not isinstance(v, int):
-                v = v.self.kind
+                v = v.value
             size += len(b"0") + size_varint32(v)
         if self.start_time_unix_nano:
             size += len(b"9") + 8
@@ -344,7 +344,7 @@ class Span(MessageMarshaler):
         if self.kind:
             v = self.kind
             if not isinstance(v, int):
-                v = v.self.kind
+                v = v.value
             out += b"0"
             write_varint_unsigned(out, v)
         if self.start_time_unix_nano:
@@ -538,15 +538,15 @@ class Span(MessageMarshaler):
 
 class Status(MessageMarshaler):
     message: str
-    code: int
+    code: Status.StatusCode
 
     def __init__(
         self,
         message: str = "",
-        code: int = 0,
+        code: Status.StatusCode = 0,
     ):
         self.message: str = message
-        self.code: int = code
+        self.code: Status.StatusCode = code
 
     def calculate_size(self) -> int:
         size = 0
@@ -557,7 +557,7 @@ class Status(MessageMarshaler):
         if self.code:
             v = self.code
             if not isinstance(v, int):
-                v = v.self.code
+                v = v.value
             size += len(b"\x18") + size_varint32(v)
         return size
 
@@ -570,7 +570,7 @@ class Status(MessageMarshaler):
         if self.code:
             v = self.code
             if not isinstance(v, int):
-                v = v.self.code
+                v = v.value
             out += b"\x18"
             write_varint_unsigned(out, v)
 

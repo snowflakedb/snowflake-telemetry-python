@@ -208,7 +208,7 @@ class ScopeLogs(MessageMarshaler):
 
 class LogRecord(MessageMarshaler):
     time_unix_nano: int
-    severity_number: int
+    severity_number: SeverityNumber
     severity_text: str
 
     @property
@@ -232,7 +232,7 @@ class LogRecord(MessageMarshaler):
     def __init__(
         self,
         time_unix_nano: int = 0,
-        severity_number: int = 0,
+        severity_number: SeverityNumber = 0,
         severity_text: str = "",
         body: AnyValue = None,
         attributes: List[KeyValue] = None,
@@ -243,7 +243,7 @@ class LogRecord(MessageMarshaler):
         observed_time_unix_nano: int = 0,
     ):
         self.time_unix_nano: int = time_unix_nano
-        self.severity_number: int = severity_number
+        self.severity_number: SeverityNumber = severity_number
         self.severity_text: str = severity_text
         self._body: AnyValue = body
         self._attributes: List[KeyValue] = attributes
@@ -260,7 +260,7 @@ class LogRecord(MessageMarshaler):
         if self.severity_number:
             v = self.severity_number
             if not isinstance(v, int):
-                v = v.self.severity_number
+                v = v.value
             size += len(b"\x10") + size_varint32(v)
         if self.severity_text:
             v = self.severity_text.encode("utf-8")
@@ -296,7 +296,7 @@ class LogRecord(MessageMarshaler):
         if self.severity_number:
             v = self.severity_number
             if not isinstance(v, int):
-                v = v.self.severity_number
+                v = v.value
             out += b"\x10"
             write_varint_unsigned(out, v)
         if self.severity_text:
