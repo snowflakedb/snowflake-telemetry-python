@@ -30,8 +30,7 @@ def pb_float(): return floats(allow_nan=False, allow_infinity=False, width=32)
 def pb_double(): return floats(allow_nan=False, allow_infinity=False, width=64)
 def draw_pb_double(draw):
     # -0.0 is an edge case that is not handled by the snowflake serialization library
-    # Protobuf serialization will serialize -0.0 as "-0.0", and omit 0.0
-    # Snowflake will omit both -0.0 and 0.0
+    # TODO: Fix this edge case
     double = draw(pb_double())
     assume(str(double) != "-0.0")
     return double
@@ -42,7 +41,9 @@ def pb_sfixed32(): return pb_int32()
 def pb_bool(): return booleans()
 def pb_string(): return text(max_size=20)
 def pb_bytes(): return binary(max_size=20)
-def pb_enum(enum): return sampled_from([member.value for member in enum])
+def pb_enum(enum): 
+    # TODO: Need to sample from the enum members, not the enum itself
+    return sampled_from([member.value for member in enum])
 def pb_repeated(type): return lists(type, max_size=3) # limit the size of the repeated field to speed up testing
 def pb_span_id(): return binary(min_size=8, max_size=8)
 def pb_trace_id(): return binary(min_size=16, max_size=16)
