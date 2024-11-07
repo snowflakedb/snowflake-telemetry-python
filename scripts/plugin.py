@@ -35,172 +35,172 @@ class DummyMessage(MessageMarshaler):
     def size_bool(self, _tag_: bytes, _) -> int:
         return len(_tag_) + 1
 
-    def size_enum(self, _tag_: bytes, _field_name_: Union[Enum, int]) -> int:
-        v = _field_name_
+    def size_enum(self, _tag_: bytes, FIELD_ATTR: Union[Enum, int]) -> int:
+        v = FIELD_ATTR
         if not isinstance(v, int):
             v = v.value
         return len(_tag_) + Varint.size_varint_u32(v)
 
-    def size_uint32(self, _tag_: bytes, _field_name_: int) -> int:
-        return len(_tag_) + Varint.size_varint_u32(_field_name_)
+    def size_uint32(self, _tag_: bytes, FIELD_ATTR: int) -> int:
+        return len(_tag_) + Varint.size_varint_u32(FIELD_ATTR)
 
-    def size_uint64(self, _tag_: bytes, _field_name_: int) -> int:
-        return len(_tag_) + Varint.size_varint_u64(_field_name_)
+    def size_uint64(self, _tag_: bytes, FIELD_ATTR: int) -> int:
+        return len(_tag_) + Varint.size_varint_u64(FIELD_ATTR)
 
-    def size_sint32(self, _tag_: bytes, _field_name_: int) -> int:
-        return len(_tag_) + Varint.size_varint_s32(_field_name_)
+    def size_sint32(self, _tag_: bytes, FIELD_ATTR: int) -> int:
+        return len(_tag_) + Varint.size_varint_s32(FIELD_ATTR)
 
-    def size_sint64(self, _tag_: bytes, _field_name_: int) -> int: 
-        return len(_tag_) + Varint.size_varint_s64(_field_name_)
+    def size_sint64(self, _tag_: bytes, FIELD_ATTR: int) -> int: 
+        return len(_tag_) + Varint.size_varint_s64(FIELD_ATTR)
 
-    def size_int32(self, _tag_: bytes, _field_name_: int) -> int:
-        return len(_tag_) + Varint.size_varint_i32(_field_name_)
+    def size_int32(self, _tag_: bytes, FIELD_ATTR: int) -> int:
+        return len(_tag_) + Varint.size_varint_i32(FIELD_ATTR)
 
-    def size_int64(self, _tag_: bytes, _field_name_: int) -> int:
-        return len(_tag_) + Varint.size_varint_i64(_field_name_)
+    def size_int64(self, _tag_: bytes, FIELD_ATTR: int) -> int:
+        return len(_tag_) + Varint.size_varint_i64(FIELD_ATTR)
 
-    def size_float(self, _tag_: bytes, _field_name_: float) -> int:
+    def size_float(self, _tag_: bytes, FIELD_ATTR: float) -> int:
         return len(_tag_) + 4
 
-    def size_double(self, _tag_: bytes, _field_name_: float) -> int:
+    def size_double(self, _tag_: bytes, FIELD_ATTR: float) -> int:
         return len(_tag_) + 8
 
-    def size_fixed32(self, _tag_: bytes, _field_name_: int) -> int:
+    def size_fixed32(self, _tag_: bytes, FIELD_ATTR: int) -> int:
         return len(_tag_) + 4
 
-    def size_fixed64(self, _tag_: bytes, _field_name_: int) -> int:
+    def size_fixed64(self, _tag_: bytes, FIELD_ATTR: int) -> int:
         return len(_tag_) + 8
 
-    def size_sfixed32(self, _tag_: bytes, _field_name_: int) -> int:
+    def size_sfixed32(self, _tag_: bytes, FIELD_ATTR: int) -> int:
         return len(_tag_) + 4
 
-    def size_sfixed64(self, _tag_: bytes, _field_name_: int) -> int:
+    def size_sfixed64(self, _tag_: bytes, FIELD_ATTR: int) -> int:
         return len(_tag_) + 8
 
-    def size_bytes(self, _tag_: bytes, _field_name_: bytes) -> int:
-        return len(_tag_) + Varint.size_varint_u32(len(_field_name_)) + len(_field_name_)
+    def size_bytes(self, _tag_: bytes, FIELD_ATTR: bytes) -> int:
+        return len(_tag_) + Varint.size_varint_u32(len(FIELD_ATTR)) + len(FIELD_ATTR)
 
-    def size_string(self, _tag_: bytes, _field_name_: str) -> int:
-        v = _field_name_.encode("utf-8")
-        self._cachefieldname_encoded = v
+    def size_string(self, _tag_: bytes, FIELD_ATTR: str) -> int:
+        v = FIELD_ATTR.encode("utf-8")
+        self._CACHED_FIELD_encoded = v
         return len(_tag_) + Varint.size_varint_u32(len(v)) + len(v)
 
-    def size_message(self, _tag_: bytes, _field_name_: MessageMarshaler) -> int: 
-        return len(_tag_) + Varint.size_varint_u32(_field_name_._get_size()) + _field_name_._get_size()
+    def size_message(self, _tag_: bytes, FIELD_ATTR: MessageMarshaler) -> int: 
+        return len(_tag_) + Varint.size_varint_u32(FIELD_ATTR._get_size()) + FIELD_ATTR._get_size()
 
-    def size_repeated_message(self, _tag_: bytes, _field_name_: List[MessageMarshaler]) -> int:
-        return sum(message._get_size() + len(_tag_) + Varint.size_varint_u32(message._get_size()) for message in _field_name_)
+    def size_repeated_message(self, _tag_: bytes, FIELD_ATTR: List[MessageMarshaler]) -> int:
+        return sum(message._get_size() + len(_tag_) + Varint.size_varint_u32(message._get_size()) for message in FIELD_ATTR)
 
-    def size_repeated_double(self, _tag_: bytes, _field_name_: List[float]): 
-        return len(_tag_) + len(_field_name_) * 8 + Varint.size_varint_u32(len(_field_name_) * 8)
+    def size_repeated_double(self, _tag_: bytes, FIELD_ATTR: List[float]): 
+        return len(_tag_) + len(FIELD_ATTR) * 8 + Varint.size_varint_u32(len(FIELD_ATTR) * 8)
 
-    def size_repeated_fixed64(self, _tag_: bytes, _field_name_: List[int]): 
-        return len(_tag_) + len(_field_name_) * 8 + Varint.size_varint_u32(len(_field_name_) * 8)
+    def size_repeated_fixed64(self, _tag_: bytes, FIELD_ATTR: List[int]): 
+        return len(_tag_) + len(FIELD_ATTR) * 8 + Varint.size_varint_u32(len(FIELD_ATTR) * 8)
 
-    def size_repeated_uint64(self, _tag_: bytes, _field_name_: List[int]):
-        s = sum(Varint.size_varint_u64(uint32) for uint32 in _field_name_)
-        self._cachefieldname_size = s
+    def size_repeated_uint64(self, _tag_: bytes, FIELD_ATTR: List[int]):
+        s = sum(Varint.size_varint_u64(uint32) for uint32 in FIELD_ATTR)
+        self._CACHED_FIELD_size = s
         return len(_tag_) + s + Varint.size_varint_u32(s)
 
     # Serialization functions
 
-    def serialize_bool(self, out: bytearray, _tag_: bytes, _field_name_: bool) -> None:
+    def serialize_bool(self, out: bytearray, _tag_: bytes, FIELD_ATTR: bool) -> None:
         out += _tag_
-        Varint.write_varint_u32(out, 1 if _field_name_ else 0)
+        Varint.write_varint_u32(out, 1 if FIELD_ATTR else 0)
 
-    def serialize_enum(self, out: bytearray, _tag_: bytes, _field_name_: Union[Enum, int]) -> None:
-        v = _field_name_
+    def serialize_enum(self, out: bytearray, _tag_: bytes, FIELD_ATTR: Union[Enum, int]) -> None:
+        v = FIELD_ATTR
         if not isinstance(v, int):
             v = v.value
         out += _tag_
         Varint.write_varint_u32(out, v)
 
-    def serialize_uint32(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_uint32(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        Varint.write_varint_u32(out, _field_name_)
+        Varint.write_varint_u32(out, FIELD_ATTR)
 
-    def serialize_uint64(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_uint64(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        Varint.write_varint_u64(out, _field_name_)
+        Varint.write_varint_u64(out, FIELD_ATTR)
 
-    def serialize_sint32(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_sint32(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        Varint.write_varint_s32(out, _field_name_)
+        Varint.write_varint_s32(out, FIELD_ATTR)
 
-    def serialize_sint64(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_sint64(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        Varint.write_varint_s64(out, _field_name_)
+        Varint.write_varint_s64(out, FIELD_ATTR)
 
-    def serialize_int32(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_int32(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        Varint.write_varint_i32(out, _field_name_)
+        Varint.write_varint_i32(out, FIELD_ATTR)
 
-    def serialize_int64(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_int64(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        Varint.write_varint_i64(out, _field_name_)
+        Varint.write_varint_i64(out, FIELD_ATTR)
 
-    def serialize_fixed32(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_fixed32(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        out += struct.pack("<I", _field_name_)
+        out += struct.pack("<I", FIELD_ATTR)
 
-    def serialize_fixed64(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_fixed64(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        out += struct.pack("<Q", _field_name_)
+        out += struct.pack("<Q", FIELD_ATTR)
 
-    def serialize_sfixed32(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_sfixed32(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        out += struct.pack("<i", _field_name_)
+        out += struct.pack("<i", FIELD_ATTR)
 
-    def serialize_sfixed64(self, out: bytearray, _tag_: bytes, _field_name_: int) -> None:
+    def serialize_sfixed64(self, out: bytearray, _tag_: bytes, FIELD_ATTR: int) -> None:
         out += _tag_
-        out += struct.pack("<q", _field_name_)
+        out += struct.pack("<q", FIELD_ATTR)
 
-    def serialize_float(self, out: bytearray, _tag_: bytes, _field_name_: float) -> None:
+    def serialize_float(self, out: bytearray, _tag_: bytes, FIELD_ATTR: float) -> None:
         out += _tag_
-        out += struct.pack("<f", _field_name_)
+        out += struct.pack("<f", FIELD_ATTR)
 
-    def serialize_double(self, out: bytearray, _tag_: bytes, _field_name_: float) -> None:
+    def serialize_double(self, out: bytearray, _tag_: bytes, FIELD_ATTR: float) -> None:
         out += _tag_
-        out += struct.pack("<d", _field_name_)
+        out += struct.pack("<d", FIELD_ATTR)
 
-    def serialize_bytes(self, out: bytearray, _tag_: bytes, _field_name_: bytes) -> None:
+    def serialize_bytes(self, out: bytearray, _tag_: bytes, FIELD_ATTR: bytes) -> None:
         out += _tag_
-        Varint.write_varint_u32(out, len(_field_name_))
-        out += _field_name_
+        Varint.write_varint_u32(out, len(FIELD_ATTR))
+        out += FIELD_ATTR
 
-    def serialize_string(self, out: bytearray, _tag_: bytes, _field_name_: str) -> None:
-        v = self._cachefieldname_encoded
+    def serialize_string(self, out: bytearray, _tag_: bytes, FIELD_ATTR: str) -> None:
+        v = self._CACHED_FIELD_encoded
         out += _tag_
         Varint.write_varint_u32(out, len(v))
         out += v
 
-    def serialize_message(self, out: bytearray, _tag_: bytes, _field_name_: MessageMarshaler) -> None:
+    def serialize_message(self, out: bytearray, _tag_: bytes, FIELD_ATTR: MessageMarshaler) -> None:
         out += _tag_
-        Varint.write_varint_u32(out, _field_name_._get_size())
-        _field_name_.write_to(out)
+        Varint.write_varint_u32(out, FIELD_ATTR._get_size())
+        FIELD_ATTR.write_to(out)
 
-    def serialize_repeated_message(self, out: bytearray, _tag_: bytes, _field_name_: List[MessageMarshaler]) -> None:
-        for v in _field_name_:
+    def serialize_repeated_message(self, out: bytearray, _tag_: bytes, FIELD_ATTR: List[MessageMarshaler]) -> None:
+        for v in FIELD_ATTR:
             out += _tag_
             Varint.write_varint_u32(out, v._get_size())
             v.write_to(out)
 
-    def serialize_repeated_double(self, out: bytearray, _tag_: bytes, _field_name_: List[float]) -> None:
+    def serialize_repeated_double(self, out: bytearray, _tag_: bytes, FIELD_ATTR: List[float]) -> None:
         out += _tag_
-        Varint.write_varint_u32(out, len(_field_name_) * 8)
-        for v in _field_name_:
+        Varint.write_varint_u32(out, len(FIELD_ATTR) * 8)
+        for v in FIELD_ATTR:
             out += struct.pack("<d", v)
 
-    def serialize_repeated_fixed64(self, out: bytearray, _tag_: bytes, _field_name_: List[int]) -> None:
+    def serialize_repeated_fixed64(self, out: bytearray, _tag_: bytes, FIELD_ATTR: List[int]) -> None:
         out += _tag_
-        Varint.write_varint_u32(out, len(_field_name_) * 8)
-        for v in _field_name_:
+        Varint.write_varint_u32(out, len(FIELD_ATTR) * 8)
+        for v in FIELD_ATTR:
             out += struct.pack("<Q", v)
 
-    def serialize_repeated_uint64(self, out: bytearray, _tag_: bytes, _field_name_: List[int]) -> None:
+    def serialize_repeated_uint64(self, out: bytearray, _tag_: bytes, FIELD_ATTR: List[int]) -> None:
         out += _tag_
-        Varint.write_varint_u32(out, self._cachefieldname_size)
-        for v in _field_name_:
+        Varint.write_varint_u32(out, self._CACHED_FIELD_size)
+        for v in FIELD_ATTR:
             Varint.write_varint_u64(out, v)
 
 # Inline utility functions
@@ -213,8 +213,8 @@ def inline_size_function(proto_type: str, field_name: str, field_tag: str) -> st
     function_definition = "\n".join(function_definition)
     function_definition = dedent(function_definition)
     # Replace the field name
-    function_definition = function_definition.replace("_field_name_", f"self.{field_name}")
-    function_definition = function_definition.replace("cachefieldname", field_name)
+    function_definition = function_definition.replace("FIELD_ATTR", f"self.{field_name}")
+    function_definition = function_definition.replace("CACHED_FIELD", field_name)
     # Replace the _tag_
     function_definition = function_definition.replace("_tag_", field_tag)
     # Inline the return statement
@@ -229,24 +229,23 @@ def inline_serialize_function(proto_type: str, field_name: str, field_tag: str) 
     function_definition = "\n".join(function_definition)
     function_definition = dedent(function_definition)
     # Replace the field name
-    function_definition = function_definition.replace("_field_name_", f"self.{field_name}")
-    function_definition = function_definition.replace("cachefieldname", field_name)
+    function_definition = function_definition.replace("FIELD_ATTR", f"self.{field_name}")
+    function_definition = function_definition.replace("CACHED_FIELD", field_name)
     # Replace the _tag_
     function_definition = function_definition.replace("_tag_", field_tag)
     return function_definition
 
 # Add a presence check to a function definition
 # https://protobuf.dev/programming-guides/proto3/#default
-def add_presence_check(encode_presence: bool, field_name: str, function_definition: str) -> str:
+def add_presence_check(proto_type: str, encode_presence: bool, field_name: str, function_definition: str) -> str:
     # oneof, optional (virtual oneof), and message fields are encoded if they are not None
     function_definition = indent(function_definition, "    ")
     if encode_presence:
         return f"if self.{field_name} is not None:\n{function_definition}"
     # Other fields are encoded if they are not the default value
-    # Which happens to align with the bool(x) check for most cases
-    # TODO: cases to handle:
-    #   - double and float -0.0 should be encoded
-    #   - enum member with value 0 should not be encoded
+    # Which happens to align with the bool(x) check for all primitive types
+    # TODO: Except
+    #   - double and float -0.0 should be encoded, even though bool(-0.0) is False
     return f"if self.{field_name}:\n{function_definition}"
 
 class WireType(IntEnum):
@@ -387,9 +386,9 @@ class FieldTemplate:
 
         # Inline the size and serialization functions for the field
         serialize_field_inline = inline_serialize_function(proto_type, attr_name, tag)
-        serialize_field_inline = add_presence_check(encode_presence, attr_name, serialize_field_inline)
+        serialize_field_inline = add_presence_check(proto_type, encode_presence, attr_name, serialize_field_inline)
         size_field_inline = inline_size_function(proto_type, attr_name, tag)
-        size_field_inline = add_presence_check(encode_presence, attr_name, size_field_inline)
+        size_field_inline = add_presence_check(proto_type, encode_presence, attr_name, size_field_inline)
 
         return FieldTemplate(
             name=field_name,

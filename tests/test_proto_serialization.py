@@ -31,8 +31,7 @@ def pb_sint64(): return integers(min_value=-2**63, max_value=2**63-1)
 def pb_float(): return floats(allow_nan=False, allow_infinity=False, width=32)
 def pb_double(): return floats(allow_nan=False, allow_infinity=False, width=64)
 def draw_pb_double(draw):
-    # -0.0 is an edge case that is not handled by the snowflake serialization library
-    # TODO: Fix this edge case
+    # -0.0 is an edge case that is not handled by the custom serialization library
     double = draw(pb_double())
     assume(str(double) != "-0.0")
     return double

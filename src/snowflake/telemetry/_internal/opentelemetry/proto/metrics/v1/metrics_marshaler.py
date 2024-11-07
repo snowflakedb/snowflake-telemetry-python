@@ -919,7 +919,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
             size += len(b"a") + 8
         if self.max is not None:
             size += len(b"i") + 8
-        if self.zero_threshold:
+        if self.zero_threshold != 0.0:
             size += len(b"q") + 8
         return size
 
@@ -969,7 +969,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
         if self.max is not None:
             out += b"i"
             out += struct.pack("<d", self.max)
-        if self.zero_threshold:
+        if self.zero_threshold != 0.0:
             out += b"q"
             out += struct.pack("<d", self.zero_threshold)
 
@@ -1059,7 +1059,7 @@ class SummaryDataPoint(MessageMarshaler):
             size += len(b"\x19") + 8
         if self.count:
             size += len(b"!") + 8
-        if self.sum:
+        if self.sum != 0.0:
             size += len(b")") + 8
         if self._quantile_values:
             size += sum(
@@ -1089,7 +1089,7 @@ class SummaryDataPoint(MessageMarshaler):
         if self.count:
             out += b"!"
             out += struct.pack("<Q", self.count)
-        if self.sum:
+        if self.sum != 0.0:
             out += b")"
             out += struct.pack("<d", self.sum)
         if self._quantile_values:
@@ -1120,17 +1120,17 @@ class SummaryDataPoint(MessageMarshaler):
 
         def calculate_size(self) -> int:
             size = 0
-            if self.quantile:
+            if self.quantile != 0.0:
                 size += len(b"\t") + 8
-            if self.value:
+            if self.value != 0.0:
                 size += len(b"\x11") + 8
             return size
 
         def write_to(self, out: BytesIO) -> None:
-            if self.quantile:
+            if self.quantile != 0.0:
                 out += b"\t"
                 out += struct.pack("<d", self.quantile)
-            if self.value:
+            if self.value != 0.0:
                 out += b"\x11"
                 out += struct.pack("<d", self.value)
 
