@@ -15,9 +15,7 @@ from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_mars
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,
-    size_varint32,
-    size_varint64,
-    write_varint_unsigned,
+    Varint,
 )
 
 
@@ -45,7 +43,9 @@ class TracesData(MessageMarshaler):
         size = 0
         if self._resource_spans:
             size += sum(
-                message._get_size() + len(b"\n") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\n")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._resource_spans
             )
         return size
@@ -54,7 +54,7 @@ class TracesData(MessageMarshaler):
         if self._resource_spans:
             for v in self._resource_spans:
                 out += b"\n"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
 
 
@@ -88,34 +88,36 @@ class ResourceSpans(MessageMarshaler):
         if self._resource is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self._resource._get_size())
+                + Varint.size_varint_u32(self._resource._get_size())
                 + self._resource._get_size()
             )
         if self._scope_spans:
             size += sum(
-                message._get_size() + len(b"\x12") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\x12")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._scope_spans
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
             self._schema_url_encoded = v
-            size += len(b"\x1a") + size_varint32(len(v)) + len(v)
+            size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
     def write_to(self, out: BytesIO) -> None:
         if self._resource is not None:
             out += b"\n"
-            write_varint_unsigned(out, self._resource._get_size())
+            Varint.write_varint_u32(out, self._resource._get_size())
             self._resource.write_to(out)
         if self._scope_spans:
             for v in self._scope_spans:
                 out += b"\x12"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
             v = self._schema_url_encoded
             out += b"\x1a"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
 
 
@@ -149,34 +151,36 @@ class ScopeSpans(MessageMarshaler):
         if self._scope is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self._scope._get_size())
+                + Varint.size_varint_u32(self._scope._get_size())
                 + self._scope._get_size()
             )
         if self._spans:
             size += sum(
-                message._get_size() + len(b"\x12") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\x12")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._spans
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
             self._schema_url_encoded = v
-            size += len(b"\x1a") + size_varint32(len(v)) + len(v)
+            size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
     def write_to(self, out: BytesIO) -> None:
         if self._scope is not None:
             out += b"\n"
-            write_varint_unsigned(out, self._scope._get_size())
+            Varint.write_varint_u32(out, self._scope._get_size())
             self._scope.write_to(out)
         if self._spans:
             for v in self._spans:
                 out += b"\x12"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
             v = self._schema_url_encoded
             out += b"\x1a"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
 
 
@@ -261,57 +265,71 @@ class Span(MessageMarshaler):
     def calculate_size(self) -> int:
         size = 0
         if self.trace_id:
-            size += len(b"\n") + size_varint32(len(self.trace_id)) + len(self.trace_id)
+            size += (
+                len(b"\n")
+                + Varint.size_varint_u32(len(self.trace_id))
+                + len(self.trace_id)
+            )
         if self.span_id:
-            size += len(b"\x12") + size_varint32(len(self.span_id)) + len(self.span_id)
+            size += (
+                len(b"\x12")
+                + Varint.size_varint_u32(len(self.span_id))
+                + len(self.span_id)
+            )
         if self.trace_state:
             v = self.trace_state.encode("utf-8")
             self._trace_state_encoded = v
-            size += len(b"\x1a") + size_varint32(len(v)) + len(v)
+            size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self.parent_span_id:
             size += (
                 len(b'"')
-                + size_varint32(len(self.parent_span_id))
+                + Varint.size_varint_u32(len(self.parent_span_id))
                 + len(self.parent_span_id)
             )
         if self.name:
             v = self.name.encode("utf-8")
             self._name_encoded = v
-            size += len(b"*") + size_varint32(len(v)) + len(v)
+            size += len(b"*") + Varint.size_varint_u32(len(v)) + len(v)
         if self.kind:
             v = self.kind
             if not isinstance(v, int):
                 v = v.value
-            size += len(b"0") + size_varint32(v)
+            size += len(b"0") + Varint.size_varint_u32(v)
         if self.start_time_unix_nano:
             size += len(b"9") + 8
         if self.end_time_unix_nano:
             size += len(b"A") + 8
         if self._attributes:
             size += sum(
-                message._get_size() + len(b"J") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"J")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._attributes
             )
         if self.dropped_attributes_count:
-            size += len(b"P") + size_varint32(self.dropped_attributes_count)
+            size += len(b"P") + Varint.size_varint_u32(self.dropped_attributes_count)
         if self._events:
             size += sum(
-                message._get_size() + len(b"Z") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"Z")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._events
             )
         if self.dropped_events_count:
-            size += len(b"`") + size_varint32(self.dropped_events_count)
+            size += len(b"`") + Varint.size_varint_u32(self.dropped_events_count)
         if self._links:
             size += sum(
-                message._get_size() + len(b"j") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"j")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._links
             )
         if self.dropped_links_count:
-            size += len(b"p") + size_varint32(self.dropped_links_count)
+            size += len(b"p") + Varint.size_varint_u32(self.dropped_links_count)
         if self._status is not None:
             size += (
                 len(b"z")
-                + size_varint32(self._status._get_size())
+                + Varint.size_varint_u32(self._status._get_size())
                 + self._status._get_size()
             )
         if self.flags:
@@ -321,32 +339,32 @@ class Span(MessageMarshaler):
     def write_to(self, out: BytesIO) -> None:
         if self.trace_id:
             out += b"\n"
-            write_varint_unsigned(out, len(self.trace_id))
+            Varint.write_varint_u32(out, len(self.trace_id))
             out += self.trace_id
         if self.span_id:
             out += b"\x12"
-            write_varint_unsigned(out, len(self.span_id))
+            Varint.write_varint_u32(out, len(self.span_id))
             out += self.span_id
         if self.trace_state:
             v = self._trace_state_encoded
             out += b"\x1a"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
         if self.parent_span_id:
             out += b'"'
-            write_varint_unsigned(out, len(self.parent_span_id))
+            Varint.write_varint_u32(out, len(self.parent_span_id))
             out += self.parent_span_id
         if self.name:
             v = self._name_encoded
             out += b"*"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
         if self.kind:
             v = self.kind
             if not isinstance(v, int):
                 v = v.value
             out += b"0"
-            write_varint_unsigned(out, v)
+            Varint.write_varint_u32(out, v)
         if self.start_time_unix_nano:
             out += b"9"
             out += struct.pack("<Q", self.start_time_unix_nano)
@@ -356,30 +374,30 @@ class Span(MessageMarshaler):
         if self._attributes:
             for v in self._attributes:
                 out += b"J"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.dropped_attributes_count:
             out += b"P"
-            write_varint_unsigned(out, self.dropped_attributes_count)
+            Varint.write_varint_u32(out, self.dropped_attributes_count)
         if self._events:
             for v in self._events:
                 out += b"Z"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.dropped_events_count:
             out += b"`"
-            write_varint_unsigned(out, self.dropped_events_count)
+            Varint.write_varint_u32(out, self.dropped_events_count)
         if self._links:
             for v in self._links:
                 out += b"j"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.dropped_links_count:
             out += b"p"
-            write_varint_unsigned(out, self.dropped_links_count)
+            Varint.write_varint_u32(out, self.dropped_links_count)
         if self._status is not None:
             out += b"z"
-            write_varint_unsigned(out, self._status._get_size())
+            Varint.write_varint_u32(out, self._status._get_size())
             self._status.write_to(out)
         if self.flags:
             out += b"\x85\x01"
@@ -424,16 +442,18 @@ class Span(MessageMarshaler):
             if self.name:
                 v = self.name.encode("utf-8")
                 self._name_encoded = v
-                size += len(b"\x12") + size_varint32(len(v)) + len(v)
+                size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
             if self._attributes:
                 size += sum(
                     message._get_size()
                     + len(b"\x1a")
-                    + size_varint32(message._get_size())
+                    + Varint.size_varint_u32(message._get_size())
                     for message in self._attributes
                 )
             if self.dropped_attributes_count:
-                size += len(b" ") + size_varint32(self.dropped_attributes_count)
+                size += len(b" ") + Varint.size_varint_u32(
+                    self.dropped_attributes_count
+                )
             return size
 
         def write_to(self, out: BytesIO) -> None:
@@ -443,16 +463,16 @@ class Span(MessageMarshaler):
             if self.name:
                 v = self._name_encoded
                 out += b"\x12"
-                write_varint_unsigned(out, len(v))
+                Varint.write_varint_u32(out, len(v))
                 out += v
             if self._attributes:
                 for v in self._attributes:
                     out += b"\x1a"
-                    write_varint_unsigned(out, v._get_size())
+                    Varint.write_varint_u32(out, v._get_size())
                     v.write_to(out)
             if self.dropped_attributes_count:
                 out += b" "
-                write_varint_unsigned(out, self.dropped_attributes_count)
+                Varint.write_varint_u32(out, self.dropped_attributes_count)
 
     class Link(MessageMarshaler):
         trace_id: bytes
@@ -488,23 +508,31 @@ class Span(MessageMarshaler):
             size = 0
             if self.trace_id:
                 size += (
-                    len(b"\n") + size_varint32(len(self.trace_id)) + len(self.trace_id)
+                    len(b"\n")
+                    + Varint.size_varint_u32(len(self.trace_id))
+                    + len(self.trace_id)
                 )
             if self.span_id:
                 size += (
-                    len(b"\x12") + size_varint32(len(self.span_id)) + len(self.span_id)
+                    len(b"\x12")
+                    + Varint.size_varint_u32(len(self.span_id))
+                    + len(self.span_id)
                 )
             if self.trace_state:
                 v = self.trace_state.encode("utf-8")
                 self._trace_state_encoded = v
-                size += len(b"\x1a") + size_varint32(len(v)) + len(v)
+                size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
             if self._attributes:
                 size += sum(
-                    message._get_size() + len(b'"') + size_varint32(message._get_size())
+                    message._get_size()
+                    + len(b'"')
+                    + Varint.size_varint_u32(message._get_size())
                     for message in self._attributes
                 )
             if self.dropped_attributes_count:
-                size += len(b"(") + size_varint32(self.dropped_attributes_count)
+                size += len(b"(") + Varint.size_varint_u32(
+                    self.dropped_attributes_count
+                )
             if self.flags:
                 size += len(b"5") + 4
             return size
@@ -512,25 +540,25 @@ class Span(MessageMarshaler):
         def write_to(self, out: BytesIO) -> None:
             if self.trace_id:
                 out += b"\n"
-                write_varint_unsigned(out, len(self.trace_id))
+                Varint.write_varint_u32(out, len(self.trace_id))
                 out += self.trace_id
             if self.span_id:
                 out += b"\x12"
-                write_varint_unsigned(out, len(self.span_id))
+                Varint.write_varint_u32(out, len(self.span_id))
                 out += self.span_id
             if self.trace_state:
                 v = self._trace_state_encoded
                 out += b"\x1a"
-                write_varint_unsigned(out, len(v))
+                Varint.write_varint_u32(out, len(v))
                 out += v
             if self._attributes:
                 for v in self._attributes:
                     out += b'"'
-                    write_varint_unsigned(out, v._get_size())
+                    Varint.write_varint_u32(out, v._get_size())
                     v.write_to(out)
             if self.dropped_attributes_count:
                 out += b"("
-                write_varint_unsigned(out, self.dropped_attributes_count)
+                Varint.write_varint_u32(out, self.dropped_attributes_count)
             if self.flags:
                 out += b"5"
                 out += struct.pack("<I", self.flags)
@@ -553,26 +581,26 @@ class Status(MessageMarshaler):
         if self.message:
             v = self.message.encode("utf-8")
             self._message_encoded = v
-            size += len(b"\x12") + size_varint32(len(v)) + len(v)
+            size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         if self.code:
             v = self.code
             if not isinstance(v, int):
                 v = v.value
-            size += len(b"\x18") + size_varint32(v)
+            size += len(b"\x18") + Varint.size_varint_u32(v)
         return size
 
     def write_to(self, out: BytesIO) -> None:
         if self.message:
             v = self._message_encoded
             out += b"\x12"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
         if self.code:
             v = self.code
             if not isinstance(v, int):
                 v = v.value
             out += b"\x18"
-            write_varint_unsigned(out, v)
+            Varint.write_varint_u32(out, v)
 
     class StatusCode(Enum):
         STATUS_CODE_UNSET = 0

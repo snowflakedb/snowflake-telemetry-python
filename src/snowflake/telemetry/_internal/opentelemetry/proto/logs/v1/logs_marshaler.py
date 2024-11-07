@@ -15,9 +15,7 @@ from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_mars
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,
-    size_varint32,
-    size_varint64,
-    write_varint_unsigned,
+    Varint,
 )
 
 
@@ -71,7 +69,9 @@ class LogsData(MessageMarshaler):
         size = 0
         if self._resource_logs:
             size += sum(
-                message._get_size() + len(b"\n") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\n")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._resource_logs
             )
         return size
@@ -80,7 +80,7 @@ class LogsData(MessageMarshaler):
         if self._resource_logs:
             for v in self._resource_logs:
                 out += b"\n"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
 
 
@@ -114,34 +114,36 @@ class ResourceLogs(MessageMarshaler):
         if self._resource is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self._resource._get_size())
+                + Varint.size_varint_u32(self._resource._get_size())
                 + self._resource._get_size()
             )
         if self._scope_logs:
             size += sum(
-                message._get_size() + len(b"\x12") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\x12")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._scope_logs
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
             self._schema_url_encoded = v
-            size += len(b"\x1a") + size_varint32(len(v)) + len(v)
+            size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
     def write_to(self, out: BytesIO) -> None:
         if self._resource is not None:
             out += b"\n"
-            write_varint_unsigned(out, self._resource._get_size())
+            Varint.write_varint_u32(out, self._resource._get_size())
             self._resource.write_to(out)
         if self._scope_logs:
             for v in self._scope_logs:
                 out += b"\x12"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
             v = self._schema_url_encoded
             out += b"\x1a"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
 
 
@@ -175,34 +177,36 @@ class ScopeLogs(MessageMarshaler):
         if self._scope is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self._scope._get_size())
+                + Varint.size_varint_u32(self._scope._get_size())
                 + self._scope._get_size()
             )
         if self._log_records:
             size += sum(
-                message._get_size() + len(b"\x12") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\x12")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._log_records
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
             self._schema_url_encoded = v
-            size += len(b"\x1a") + size_varint32(len(v)) + len(v)
+            size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
     def write_to(self, out: BytesIO) -> None:
         if self._scope is not None:
             out += b"\n"
-            write_varint_unsigned(out, self._scope._get_size())
+            Varint.write_varint_u32(out, self._scope._get_size())
             self._scope.write_to(out)
         if self._log_records:
             for v in self._log_records:
                 out += b"\x12"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
             v = self._schema_url_encoded
             out += b"\x1a"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
 
 
@@ -261,30 +265,40 @@ class LogRecord(MessageMarshaler):
             v = self.severity_number
             if not isinstance(v, int):
                 v = v.value
-            size += len(b"\x10") + size_varint32(v)
+            size += len(b"\x10") + Varint.size_varint_u32(v)
         if self.severity_text:
             v = self.severity_text.encode("utf-8")
             self._severity_text_encoded = v
-            size += len(b"\x1a") + size_varint32(len(v)) + len(v)
+            size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self._body is not None:
             size += (
                 len(b"*")
-                + size_varint32(self._body._get_size())
+                + Varint.size_varint_u32(self._body._get_size())
                 + self._body._get_size()
             )
         if self._attributes:
             size += sum(
-                message._get_size() + len(b"2") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"2")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._attributes
             )
         if self.dropped_attributes_count:
-            size += len(b"8") + size_varint32(self.dropped_attributes_count)
+            size += len(b"8") + Varint.size_varint_u32(self.dropped_attributes_count)
         if self.flags:
             size += len(b"E") + 4
         if self.trace_id:
-            size += len(b"J") + size_varint32(len(self.trace_id)) + len(self.trace_id)
+            size += (
+                len(b"J")
+                + Varint.size_varint_u32(len(self.trace_id))
+                + len(self.trace_id)
+            )
         if self.span_id:
-            size += len(b"R") + size_varint32(len(self.span_id)) + len(self.span_id)
+            size += (
+                len(b"R")
+                + Varint.size_varint_u32(len(self.span_id))
+                + len(self.span_id)
+            )
         if self.observed_time_unix_nano:
             size += len(b"Y") + 8
         return size
@@ -298,34 +312,34 @@ class LogRecord(MessageMarshaler):
             if not isinstance(v, int):
                 v = v.value
             out += b"\x10"
-            write_varint_unsigned(out, v)
+            Varint.write_varint_u32(out, v)
         if self.severity_text:
             v = self._severity_text_encoded
             out += b"\x1a"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v
         if self._body is not None:
             out += b"*"
-            write_varint_unsigned(out, self._body._get_size())
+            Varint.write_varint_u32(out, self._body._get_size())
             self._body.write_to(out)
         if self._attributes:
             for v in self._attributes:
                 out += b"2"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.dropped_attributes_count:
             out += b"8"
-            write_varint_unsigned(out, self.dropped_attributes_count)
+            Varint.write_varint_u32(out, self.dropped_attributes_count)
         if self.flags:
             out += b"E"
             out += struct.pack("<I", self.flags)
         if self.trace_id:
             out += b"J"
-            write_varint_unsigned(out, len(self.trace_id))
+            Varint.write_varint_u32(out, len(self.trace_id))
             out += self.trace_id
         if self.span_id:
             out += b"R"
-            write_varint_unsigned(out, len(self.span_id))
+            Varint.write_varint_u32(out, len(self.span_id))
             out += self.span_id
         if self.observed_time_unix_nano:
             out += b"Y"

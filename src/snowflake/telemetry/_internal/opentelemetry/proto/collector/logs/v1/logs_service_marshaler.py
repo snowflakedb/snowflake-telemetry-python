@@ -14,9 +14,7 @@ from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler im
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,
-    size_varint32,
-    size_varint64,
-    write_varint_unsigned,
+    Varint,
 )
 
 
@@ -37,7 +35,9 @@ class ExportLogsServiceRequest(MessageMarshaler):
         size = 0
         if self._resource_logs:
             size += sum(
-                message._get_size() + len(b"\n") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\n")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._resource_logs
             )
         return size
@@ -46,7 +46,7 @@ class ExportLogsServiceRequest(MessageMarshaler):
         if self._resource_logs:
             for v in self._resource_logs:
                 out += b"\n"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
 
 
@@ -68,7 +68,7 @@ class ExportLogsServiceResponse(MessageMarshaler):
         if self._partial_success is not None:
             size += (
                 len(b"\n")
-                + size_varint32(self._partial_success._get_size())
+                + Varint.size_varint_u32(self._partial_success._get_size())
                 + self._partial_success._get_size()
             )
         return size
@@ -76,7 +76,7 @@ class ExportLogsServiceResponse(MessageMarshaler):
     def write_to(self, out: BytesIO) -> None:
         if self._partial_success is not None:
             out += b"\n"
-            write_varint_unsigned(out, self._partial_success._get_size())
+            Varint.write_varint_u32(out, self._partial_success._get_size())
             self._partial_success.write_to(out)
 
 
@@ -95,30 +95,19 @@ class ExportLogsPartialSuccess(MessageMarshaler):
     def calculate_size(self) -> int:
         size = 0
         if self.rejected_log_records:
-            size += len(b"\x08") + size_varint64(
-                self.rejected_log_records + (1 << 64)
-                if self.rejected_log_records < 0
-                else self.rejected_log_records
-            )
+            size += len(b"\x08") + Varint.size_varint_i64(self.rejected_log_records)
         if self.error_message:
             v = self.error_message.encode("utf-8")
             self._error_message_encoded = v
-            size += len(b"\x12") + size_varint32(len(v)) + len(v)
+            size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
     def write_to(self, out: BytesIO) -> None:
         if self.rejected_log_records:
             out += b"\x08"
-            write_varint_unsigned(
-                out,
-                (
-                    self.rejected_log_records + (1 << 64)
-                    if self.rejected_log_records < 0
-                    else self.rejected_log_records
-                ),
-            )
+            Varint.write_varint_i64(out, self.rejected_log_records)
         if self.error_message:
             v = self._error_message_encoded
             out += b"\x12"
-            write_varint_unsigned(out, len(v))
+            Varint.write_varint_u32(out, len(v))
             out += v

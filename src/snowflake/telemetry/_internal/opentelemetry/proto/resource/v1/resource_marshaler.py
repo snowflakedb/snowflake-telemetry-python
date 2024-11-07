@@ -14,9 +14,7 @@ from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshale
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,
-    size_varint32,
-    size_varint64,
-    write_varint_unsigned,
+    Varint,
 )
 
 
@@ -41,19 +39,21 @@ class Resource(MessageMarshaler):
         size = 0
         if self._attributes:
             size += sum(
-                message._get_size() + len(b"\n") + size_varint32(message._get_size())
+                message._get_size()
+                + len(b"\n")
+                + Varint.size_varint_u32(message._get_size())
                 for message in self._attributes
             )
         if self.dropped_attributes_count:
-            size += len(b"\x10") + size_varint32(self.dropped_attributes_count)
+            size += len(b"\x10") + Varint.size_varint_u32(self.dropped_attributes_count)
         return size
 
     def write_to(self, out: BytesIO) -> None:
         if self._attributes:
             for v in self._attributes:
                 out += b"\n"
-                write_varint_unsigned(out, v._get_size())
+                Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.dropped_attributes_count:
             out += b"\x10"
-            write_varint_unsigned(out, self.dropped_attributes_count)
+            Varint.write_varint_u32(out, self.dropped_attributes_count)

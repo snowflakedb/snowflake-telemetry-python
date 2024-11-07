@@ -8,9 +8,7 @@ from io import BytesIO
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,
-    size_varint32,
-    size_varint64,
-    write_varint_unsigned,
+    Varint,
 )
 from typing import List, Optional
     
