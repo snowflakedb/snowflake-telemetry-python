@@ -16,7 +16,10 @@ setup(
     long_description=LONG_DESCRIPTION,
     install_requires=[
         "pytest >= 7.0.0",
+        "pytest-memray",
+        "google-benchmark",
         "snowflake-telemetry-python == 0.6.0.dev",
+        "opentelemetry-exporter-otlp-proto-common == 1.26.0",
     ],
     packages=find_namespace_packages(
         where='src'
