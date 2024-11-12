@@ -47,7 +47,7 @@ class {{ message.name }}(MessageMarshaler):
 {%- for field in message.fields %}
         self.{{ field.attr_name }}: {{ field.python_type }} = {{ field.name }}
 {%- endfor %}
-        self._marshaler_cache = {}
+        {{ message.super_class_init | indent(8) }}
 
     def calculate_size(self) -> int:
         size = 0

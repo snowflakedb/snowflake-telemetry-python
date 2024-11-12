@@ -37,7 +37,6 @@ def inline_size_function(proto_type: str, field_name: str, field_tag: str) -> st
     function_definition = dedent(function_definition)
     # Replace the field name
     function_definition = function_definition.replace("FIELD_ATTR", f"self.{field_name}")
-    function_definition = function_definition.replace("CACHED_FIELD", field_name)
     # Replace the TAG
     function_definition = function_definition.replace("TAG", field_tag)
     # Inline the return statement
@@ -53,9 +52,17 @@ def inline_serialize_function(proto_type: str, field_name: str, field_tag: str) 
     function_definition = dedent(function_definition)
     # Replace the field name
     function_definition = function_definition.replace("FIELD_ATTR", f"self.{field_name}")
-    function_definition = function_definition.replace("CACHED_FIELD", field_name)
     # Replace the TAG
     function_definition = function_definition.replace("TAG", field_tag)
+    return function_definition
+
+# Inline the init function for a proto message
+def inline_init() -> str:
+    function_definition = inspect.getsource(globals()["MessageMarshaler"].__dict__["__init__"])
+    # Remove the function header and unindent the function body
+    function_definition = function_definition.splitlines()[1:]
+    function_definition = "\n".join(function_definition)
+    function_definition = dedent(function_definition)
     return function_definition
 
 # Add a presence check to a function definition
@@ -238,6 +245,7 @@ class FieldTemplate:
 @dataclass
 class MessageTemplate:
     name: str
+    super_class_init: str
     fields: List[FieldTemplate] = field(default_factory=list)
     enums: List["EnumTemplate"] = field(default_factory=list)
     messages: List["MessageTemplate"] = field(default_factory=list)
@@ -251,9 +259,16 @@ class MessageTemplate:
         fields = [FieldTemplate.from_descriptor(field, get_group(field)) for field in descriptor.field]
         fields.sort(key=lambda field: field.number)
 
+        # Inline the superclass MessageMarshaler init function
+        if INLINE_OPTIMIZATION:
+            super_class_init = inline_init()
+        else:
+            super_class_init = "super().__init__()"
+
         name = descriptor.name
         return MessageTemplate(
             name=name,
+            super_class_init=super_class_init,
             fields=fields,
             enums=[EnumTemplate.from_descriptor(enum) for enum in descriptor.enum_type],
             messages=[MessageTemplate.from_descriptor(message) for message in descriptor.nested_type],

@@ -87,8 +87,11 @@ class Varint:
 
 # Base class for all custom messages
 class MessageMarshaler:
+    _marshaler_cache: Dict[bytes, Any]
+
+    # Init may be inlined by the code generator
     def __init__(self) -> None:
-        self._marshaler_cache: Dict[bytes, Any] = {}
+        self._marshaler_cache = {}
 
     def write_to(self, out: bytearray) -> None:
         ...
@@ -102,7 +105,7 @@ class MessageMarshaler:
         return self._size
     
     def SerializeToString(self) -> bytes:
-        # size MUST be calculated before serializing since some preprocessing is done here
+        # size MUST be calculated before serializing since some preprocessing is done
         self._get_size() 
         stream = bytearray()
         self.write_to(stream)
@@ -111,11 +114,10 @@ class MessageMarshaler:
     def __bytes__(self) -> bytes:
         return self.SerializeToString()
     
-    # THE FOLLOWING FUNCTIONS CAN BE INLINED BY THE CODE GENERATOR
-    # The following strings are string replaced by the code generator if inlining:
+    # The following size and serialize functions may be inlined by the code generator
+    # The following strings are replaced by the code generator for inlining:
     #   - TAG
     #   - FIELD_ATTR
-    #   - CACHED_FIELD
 
     def size_bool(self, TAG: bytes, _) -> int:
         return len(TAG) + 1
