@@ -32,6 +32,17 @@ FILE_NAME_SUFFIX = "_marshaler"
 
 # Inline the size function for a given proto message field
 def inline_size_function(proto_type: str, field_name: str, field_tag: str) -> str:
+    """
+    For example:
+
+    class MessageMarshaler:
+        def size_uint32(self, TAG: bytes, FIELD_ATTR: int) -> int:
+            return len(TAG) + Varint.size_varint_u32(FIELD_ATTR)
+    
+    Becomes:
+
+    size += len(b"\x10") + Varint.size_varint_u32(self.int_value)
+    """
     function_definition = inspect.getsource(globals()["MessageMarshaler"].__dict__[f"size_{proto_type}"])
     # Remove the function header and unindent the function body
     function_definition = function_definition.splitlines()[1:]
@@ -47,6 +58,19 @@ def inline_size_function(proto_type: str, field_name: str, field_tag: str) -> st
 
 # Inline the serialization function for a given proto message field
 def inline_serialize_function(proto_type: str, field_name: str, field_tag: str) -> str:
+    """
+    For example:
+
+    class MessageMarshaler:
+        def serialize_uint32(self, out: BytesIO, TAG: bytes, FIELD_ATTR: int) -> None:
+            out.write(TAG)
+            Varint.serialize_varint_u32(out, FIELD_ATTR)
+    
+    Becomes:
+
+    out.write(b"\x10")
+    Varint.serialize_varint_u32(out, self.int_value)
+    """
     function_definition = inspect.getsource(globals()["MessageMarshaler"].__dict__[f"serialize_{proto_type}"])
     # Remove the function header and unindent the function body
     function_definition = function_definition.splitlines()[1:]
