@@ -64,6 +64,7 @@ class LogsData(MessageMarshaler):
         resource_logs: List[ResourceLogs] = None,
     ):
         self._resource_logs: List[ResourceLogs] = resource_logs
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -108,6 +109,7 @@ class ResourceLogs(MessageMarshaler):
         self._resource: Resource = resource
         self._scope_logs: List[ScopeLogs] = scope_logs
         self.schema_url: str = schema_url
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -126,7 +128,6 @@ class ResourceLogs(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
-            self._schema_url_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -141,7 +142,7 @@ class ResourceLogs(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self._schema_url_encoded
+            v = self.schema_url.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -171,6 +172,7 @@ class ScopeLogs(MessageMarshaler):
         self._scope: InstrumentationScope = scope
         self._log_records: List[LogRecord] = log_records
         self.schema_url: str = schema_url
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -189,7 +191,6 @@ class ScopeLogs(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
-            self._schema_url_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -204,7 +205,7 @@ class ScopeLogs(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self._schema_url_encoded
+            v = self.schema_url.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -256,6 +257,7 @@ class LogRecord(MessageMarshaler):
         self.trace_id: bytes = trace_id
         self.span_id: bytes = span_id
         self.observed_time_unix_nano: int = observed_time_unix_nano
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -268,7 +270,6 @@ class LogRecord(MessageMarshaler):
             size += len(b"\x10") + Varint.size_varint_u32(v)
         if self.severity_text:
             v = self.severity_text.encode("utf-8")
-            self._severity_text_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self._body is not None:
             size += (
@@ -314,7 +315,7 @@ class LogRecord(MessageMarshaler):
             out += b"\x10"
             Varint.write_varint_u32(out, v)
         if self.severity_text:
-            v = self._severity_text_encoded
+            v = self.severity_text.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v

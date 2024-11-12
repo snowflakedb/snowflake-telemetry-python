@@ -38,6 +38,7 @@ class TracesData(MessageMarshaler):
         resource_spans: List[ResourceSpans] = None,
     ):
         self._resource_spans: List[ResourceSpans] = resource_spans
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -82,6 +83,7 @@ class ResourceSpans(MessageMarshaler):
         self._resource: Resource = resource
         self._scope_spans: List[ScopeSpans] = scope_spans
         self.schema_url: str = schema_url
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -100,7 +102,6 @@ class ResourceSpans(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
-            self._schema_url_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -115,7 +116,7 @@ class ResourceSpans(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self._schema_url_encoded
+            v = self.schema_url.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -145,6 +146,7 @@ class ScopeSpans(MessageMarshaler):
         self._scope: InstrumentationScope = scope
         self._spans: List[Span] = spans
         self.schema_url: str = schema_url
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -163,7 +165,6 @@ class ScopeSpans(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
-            self._schema_url_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -178,7 +179,7 @@ class ScopeSpans(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self._schema_url_encoded
+            v = self.schema_url.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -261,6 +262,7 @@ class Span(MessageMarshaler):
         self.dropped_links_count: int = dropped_links_count
         self._status: Status = status
         self.flags: int = flags
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -278,7 +280,6 @@ class Span(MessageMarshaler):
             )
         if self.trace_state:
             v = self.trace_state.encode("utf-8")
-            self._trace_state_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self.parent_span_id:
             size += (
@@ -288,7 +289,6 @@ class Span(MessageMarshaler):
             )
         if self.name:
             v = self.name.encode("utf-8")
-            self._name_encoded = v
             size += len(b"*") + Varint.size_varint_u32(len(v)) + len(v)
         if self.kind:
             v = self.kind
@@ -346,7 +346,7 @@ class Span(MessageMarshaler):
             Varint.write_varint_u32(out, len(self.span_id))
             out += self.span_id
         if self.trace_state:
-            v = self._trace_state_encoded
+            v = self.trace_state.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -355,7 +355,7 @@ class Span(MessageMarshaler):
             Varint.write_varint_u32(out, len(self.parent_span_id))
             out += self.parent_span_id
         if self.name:
-            v = self._name_encoded
+            v = self.name.encode("utf-8")
             out += b"*"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -434,6 +434,7 @@ class Span(MessageMarshaler):
             self.name: str = name
             self._attributes: List[KeyValue] = attributes
             self.dropped_attributes_count: int = dropped_attributes_count
+            self._marshaler_cache = {}
 
         def calculate_size(self) -> int:
             size = 0
@@ -441,7 +442,6 @@ class Span(MessageMarshaler):
                 size += len(b"\t") + 8
             if self.name:
                 v = self.name.encode("utf-8")
-                self._name_encoded = v
                 size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
             if self._attributes:
                 size += sum(
@@ -461,7 +461,7 @@ class Span(MessageMarshaler):
                 out += b"\t"
                 out += struct.pack("<Q", self.time_unix_nano)
             if self.name:
-                v = self._name_encoded
+                v = self.name.encode("utf-8")
                 out += b"\x12"
                 Varint.write_varint_u32(out, len(v))
                 out += v
@@ -503,6 +503,7 @@ class Span(MessageMarshaler):
             self._attributes: List[KeyValue] = attributes
             self.dropped_attributes_count: int = dropped_attributes_count
             self.flags: int = flags
+            self._marshaler_cache = {}
 
         def calculate_size(self) -> int:
             size = 0
@@ -520,7 +521,6 @@ class Span(MessageMarshaler):
                 )
             if self.trace_state:
                 v = self.trace_state.encode("utf-8")
-                self._trace_state_encoded = v
                 size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
             if self._attributes:
                 size += sum(
@@ -547,7 +547,7 @@ class Span(MessageMarshaler):
                 Varint.write_varint_u32(out, len(self.span_id))
                 out += self.span_id
             if self.trace_state:
-                v = self._trace_state_encoded
+                v = self.trace_state.encode("utf-8")
                 out += b"\x1a"
                 Varint.write_varint_u32(out, len(v))
                 out += v
@@ -575,12 +575,12 @@ class Status(MessageMarshaler):
     ):
         self.message: str = message
         self.code: Status.StatusCode = code
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
         if self.message:
             v = self.message.encode("utf-8")
-            self._message_encoded = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         if self.code:
             v = self.code
@@ -591,7 +591,7 @@ class Status(MessageMarshaler):
 
     def write_to(self, out: BytesIO) -> None:
         if self.message:
-            v = self._message_encoded
+            v = self.message.encode("utf-8")
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v

@@ -34,6 +34,7 @@ class Resource(MessageMarshaler):
     ):
         self._attributes: List[KeyValue] = attributes
         self.dropped_attributes_count: int = dropped_attributes_count
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0

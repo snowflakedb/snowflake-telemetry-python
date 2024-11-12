@@ -42,6 +42,7 @@ class MetricsData(MessageMarshaler):
         resource_metrics: List[ResourceMetrics] = None,
     ):
         self._resource_metrics: List[ResourceMetrics] = resource_metrics
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -86,6 +87,7 @@ class ResourceMetrics(MessageMarshaler):
         self._resource: Resource = resource
         self._scope_metrics: List[ScopeMetrics] = scope_metrics
         self.schema_url: str = schema_url
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -104,7 +106,6 @@ class ResourceMetrics(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
-            self._schema_url_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -119,7 +120,7 @@ class ResourceMetrics(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self._schema_url_encoded
+            v = self.schema_url.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -149,6 +150,7 @@ class ScopeMetrics(MessageMarshaler):
         self._scope: InstrumentationScope = scope
         self._metrics: List[Metric] = metrics
         self.schema_url: str = schema_url
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -167,7 +169,6 @@ class ScopeMetrics(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
-            self._schema_url_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -182,7 +183,7 @@ class ScopeMetrics(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self._schema_url_encoded
+            v = self.schema_url.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -250,20 +251,18 @@ class Metric(MessageMarshaler):
         self._exponential_histogram: ExponentialHistogram = exponential_histogram
         self._summary: Summary = summary
         self._metadata: List[KeyValue] = metadata
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
         if self.name:
             v = self.name.encode("utf-8")
-            self._name_encoded = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self.description:
             v = self.description.encode("utf-8")
-            self._description_encoded = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         if self.unit:
             v = self.unit.encode("utf-8")
-            self._unit_encoded = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self._gauge is not None:
             size += (
@@ -306,17 +305,17 @@ class Metric(MessageMarshaler):
 
     def write_to(self, out: BytesIO) -> None:
         if self.name:
-            v = self._name_encoded
+            v = self.name.encode("utf-8")
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
         if self.description:
-            v = self._description_encoded
+            v = self.description.encode("utf-8")
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v
         if self.unit:
-            v = self._unit_encoded
+            v = self.unit.encode("utf-8")
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -359,6 +358,7 @@ class Gauge(MessageMarshaler):
         data_points: List[NumberDataPoint] = None,
     ):
         self._data_points: List[NumberDataPoint] = data_points
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -398,6 +398,7 @@ class Sum(MessageMarshaler):
         self._data_points: List[NumberDataPoint] = data_points
         self.aggregation_temporality: AggregationTemporality = aggregation_temporality
         self.is_monotonic: bool = is_monotonic
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -450,6 +451,7 @@ class Histogram(MessageMarshaler):
     ):
         self._data_points: List[HistogramDataPoint] = data_points
         self.aggregation_temporality: AggregationTemporality = aggregation_temporality
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -497,6 +499,7 @@ class ExponentialHistogram(MessageMarshaler):
     ):
         self._data_points: List[ExponentialHistogramDataPoint] = data_points
         self.aggregation_temporality: AggregationTemporality = aggregation_temporality
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -540,6 +543,7 @@ class Summary(MessageMarshaler):
         data_points: List[SummaryDataPoint] = None,
     ):
         self._data_points: List[SummaryDataPoint] = data_points
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -598,6 +602,7 @@ class NumberDataPoint(MessageMarshaler):
         self.as_int: int = as_int
         self._attributes: List[KeyValue] = attributes
         self.flags: int = flags
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -714,6 +719,7 @@ class HistogramDataPoint(MessageMarshaler):
         self.flags: int = flags
         self.min: float = min
         self.max: float = max
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -872,6 +878,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
         self.min: float = min
         self.max: float = max
         self.zero_threshold: float = zero_threshold
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -989,6 +996,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
         ):
             self.offset: int = offset
             self._bucket_counts: List[int] = bucket_counts
+            self._marshaler_cache = {}
 
         def calculate_size(self) -> int:
             size = 0
@@ -998,7 +1006,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
                 s = sum(
                     Varint.size_varint_u64(uint32) for uint32 in self._bucket_counts
                 )
-                self.__bucket_counts_size = s
+                self._marshaler_cache[b"\x12"] = s
                 size += len(b"\x12") + s + Varint.size_varint_u32(s)
             return size
 
@@ -1008,7 +1016,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
                 Varint.write_varint_s32(out, self.offset)
             if self._bucket_counts:
                 out += b"\x12"
-                Varint.write_varint_u32(out, self.__bucket_counts_size)
+                Varint.write_varint_u32(out, self._marshaler_cache[b"\x12"])
                 for v in self._bucket_counts:
                     Varint.write_varint_u64(out, v)
 
@@ -1050,6 +1058,7 @@ class SummaryDataPoint(MessageMarshaler):
         self._quantile_values: List[SummaryDataPoint.ValueAtQuantile] = quantile_values
         self._attributes: List[KeyValue] = attributes
         self.flags: int = flags
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -1117,6 +1126,7 @@ class SummaryDataPoint(MessageMarshaler):
         ):
             self.quantile: float = quantile
             self.value: float = value
+            self._marshaler_cache = {}
 
         def calculate_size(self) -> int:
             size = 0
@@ -1163,6 +1173,7 @@ class Exemplar(MessageMarshaler):
         self.trace_id: bytes = trace_id
         self.as_int: int = as_int
         self._filtered_attributes: List[KeyValue] = filtered_attributes
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
