@@ -31,7 +31,7 @@ FILE_NAME_SUFFIX = "_marshaler"
 # Inline utility functions
 
 # Inline the size function for a given proto message field
-def inline_size_function(proto_type: str, field_name: str, field_tag: str) -> str:
+def inline_size_function(proto_type: str, attr_name: str, field_tag: str) -> str:
     """
     For example:
 
@@ -48,8 +48,8 @@ def inline_size_function(proto_type: str, field_name: str, field_tag: str) -> st
     function_definition = function_definition.splitlines()[1:]
     function_definition = "\n".join(function_definition)
     function_definition = dedent(function_definition)
-    # Replace the field name
-    function_definition = function_definition.replace("FIELD_ATTR", f"self.{field_name}")
+    # Replace the attribute name
+    function_definition = function_definition.replace("FIELD_ATTR", f"self.{attr_name}")
     # Replace the TAG
     function_definition = function_definition.replace("TAG", field_tag)
     # Inline the return statement
@@ -57,7 +57,7 @@ def inline_size_function(proto_type: str, field_name: str, field_tag: str) -> st
     return function_definition
 
 # Inline the serialization function for a given proto message field
-def inline_serialize_function(proto_type: str, field_name: str, field_tag: str) -> str:
+def inline_serialize_function(proto_type: str, attr_name: str, field_tag: str) -> str:
     """
     For example:
 
@@ -76,8 +76,8 @@ def inline_serialize_function(proto_type: str, field_name: str, field_tag: str) 
     function_definition = function_definition.splitlines()[1:]
     function_definition = "\n".join(function_definition)
     function_definition = dedent(function_definition)
-    # Replace the field name
-    function_definition = function_definition.replace("FIELD_ATTR", f"self.{field_name}")
+    # Replace the attribute name
+    function_definition = function_definition.replace("FIELD_ATTR", f"self.{attr_name}")
     # Replace the TAG
     function_definition = function_definition.replace("TAG", field_tag)
     return function_definition
@@ -93,16 +93,16 @@ def inline_init() -> str:
 
 # Add a presence check to a function definition
 # https://protobuf.dev/programming-guides/proto3/#default
-def add_presence_check(proto_type: str, encode_presence: bool, field_name: str, function_definition: str) -> str:
+def add_presence_check(proto_type: str, encode_presence: bool, attr_name: str, function_definition: str) -> str:
     # oneof, optional (virtual oneof), and message fields are encoded if they are not None
     function_definition = indent(function_definition, "    ")
     if encode_presence:
-        return f"if self.{field_name} is not None:\n{function_definition}"
+        return f"if self.{attr_name} is not None:\n{function_definition}"
     # Other fields are encoded if they are not the default value
     # Which happens to align with the bool(x) check for all primitive types
     # TODO: Except
     #   - double and float -0.0 should be encoded, even though bool(-0.0) is False
-    return f"if self.{field_name}:\n{function_definition}"
+    return f"if self.{attr_name}:\n{function_definition}"
 
 class WireType(IntEnum):
     VARINT = 0
@@ -234,6 +234,8 @@ class FieldTemplate:
             else:
                 # https://protobuf.dev/reference/python/python-generated/#embedded_message
                 generator = f"{python_type}()"
+            # the attribute name is prefixed with an underscore as message and repeated attributes 
+            # are hidden behind a property that has the actual proto field name
             attr_name = f"_{field_name}"
 
         # Inline the size and serialization functions for the field
