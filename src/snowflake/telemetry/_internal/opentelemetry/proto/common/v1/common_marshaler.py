@@ -4,11 +4,7 @@
 from __future__ import annotations
 
 import struct
-from io import BytesIO
-from typing import (
-    List,
-    Optional,
-)
+from typing import List
 
 from snowflake.telemetry._internal.serialize import (
     Enum,
@@ -87,7 +83,7 @@ class AnyValue(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.string_value is not None:
             v = self.string_value.encode("utf-8")
             out += b"\n"
@@ -141,7 +137,7 @@ class ArrayValue(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._values:
             for v in self._values:
                 out += b"\n"
@@ -174,7 +170,7 @@ class KeyValueList(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._values:
             for v in self._values:
                 out += b"\n"
@@ -213,7 +209,7 @@ class KeyValue(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.key:
             v = self.key.encode("utf-8")
             out += b"\n"
@@ -269,7 +265,7 @@ class InstrumentationScope(MessageMarshaler):
             size += len(b" ") + Varint.size_varint_u32(self.dropped_attributes_count)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.name:
             v = self.name.encode("utf-8")
             out += b"\n"

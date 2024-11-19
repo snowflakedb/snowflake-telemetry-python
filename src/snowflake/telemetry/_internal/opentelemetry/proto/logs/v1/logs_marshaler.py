@@ -4,11 +4,7 @@
 from __future__ import annotations
 
 import struct
-from io import BytesIO
-from typing import (
-    List,
-    Optional,
-)
+from typing import List
 
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import *
 from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import *
@@ -77,7 +73,7 @@ class LogsData(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._resource_logs:
             for v in self._resource_logs:
                 out += b"\n"
@@ -131,7 +127,7 @@ class ResourceLogs(MessageMarshaler):
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._resource is not None:
             out += b"\n"
             Varint.write_varint_u32(out, self._resource._get_size())
@@ -194,7 +190,7 @@ class ScopeLogs(MessageMarshaler):
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._scope is not None:
             out += b"\n"
             Varint.write_varint_u32(out, self._scope._get_size())
@@ -304,7 +300,7 @@ class LogRecord(MessageMarshaler):
             size += len(b"Y") + 8
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.time_unix_nano:
             out += b"\t"
             out += struct.pack("<Q", self.time_unix_nano)

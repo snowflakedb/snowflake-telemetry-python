@@ -4,11 +4,7 @@
 from __future__ import annotations
 
 import struct
-from io import BytesIO
-from typing import (
-    List,
-    Optional,
-)
+from typing import List
 
 from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_marshaler import *
 from snowflake.telemetry._internal.serialize import (
@@ -43,7 +39,7 @@ class ExportMetricsServiceRequest(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._resource_metrics:
             for v in self._resource_metrics:
                 out += b"\n"
@@ -75,7 +71,7 @@ class ExportMetricsServiceResponse(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._partial_success is not None:
             out += b"\n"
             Varint.write_varint_u32(out, self._partial_success._get_size())
@@ -104,7 +100,7 @@ class ExportMetricsPartialSuccess(MessageMarshaler):
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.rejected_data_points:
             out += b"\x08"
             Varint.write_varint_i64(out, self.rejected_data_points)

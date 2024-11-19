@@ -4,11 +4,7 @@
 from __future__ import annotations
 
 import struct
-from io import BytesIO
-from typing import (
-    List,
-    Optional,
-)
+from typing import List
 
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import *
 from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import *
@@ -55,7 +51,7 @@ class MetricsData(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._resource_metrics:
             for v in self._resource_metrics:
                 out += b"\n"
@@ -109,7 +105,7 @@ class ResourceMetrics(MessageMarshaler):
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._resource is not None:
             out += b"\n"
             Varint.write_varint_u32(out, self._resource._get_size())
@@ -172,7 +168,7 @@ class ScopeMetrics(MessageMarshaler):
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._scope is not None:
             out += b"\n"
             Varint.write_varint_u32(out, self._scope._get_size())
@@ -303,7 +299,7 @@ class Metric(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.name:
             v = self.name.encode("utf-8")
             out += b"\n"
@@ -371,7 +367,7 @@ class Gauge(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._data_points:
             for v in self._data_points:
                 out += b"\n"
@@ -418,7 +414,7 @@ class Sum(MessageMarshaler):
             size += len(b"\x18") + 1
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._data_points:
             for v in self._data_points:
                 out += b"\n"
@@ -469,7 +465,7 @@ class Histogram(MessageMarshaler):
             size += len(b"\x10") + Varint.size_varint_u32(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._data_points:
             for v in self._data_points:
                 out += b"\n"
@@ -517,7 +513,7 @@ class ExponentialHistogram(MessageMarshaler):
             size += len(b"\x10") + Varint.size_varint_u32(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._data_points:
             for v in self._data_points:
                 out += b"\n"
@@ -556,7 +552,7 @@ class Summary(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._data_points:
             for v in self._data_points:
                 out += b"\n"
@@ -632,7 +628,7 @@ class NumberDataPoint(MessageMarshaler):
             size += len(b"@") + Varint.size_varint_u32(self.flags)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.start_time_unix_nano:
             out += b"\x11"
             out += struct.pack("<Q", self.start_time_unix_nano)
@@ -765,7 +761,7 @@ class HistogramDataPoint(MessageMarshaler):
             size += len(b"a") + 8
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.start_time_unix_nano:
             out += b"\x11"
             out += struct.pack("<Q", self.start_time_unix_nano)
@@ -930,7 +926,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
             size += len(b"q") + 8
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._attributes:
             for v in self._attributes:
                 out += b"\n"
@@ -1010,7 +1006,7 @@ class ExponentialHistogramDataPoint(MessageMarshaler):
                 size += len(b"\x12") + s + Varint.size_varint_u32(s)
             return size
 
-        def write_to(self, out: BytesIO) -> None:
+        def write_to(self, out: bytearray) -> None:
             if self.offset:
                 out += b"\x08"
                 Varint.write_varint_s32(out, self.offset)
@@ -1088,7 +1084,7 @@ class SummaryDataPoint(MessageMarshaler):
             size += len(b"@") + Varint.size_varint_u32(self.flags)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.start_time_unix_nano:
             out += b"\x11"
             out += struct.pack("<Q", self.start_time_unix_nano)
@@ -1136,7 +1132,7 @@ class SummaryDataPoint(MessageMarshaler):
                 size += len(b"\x11") + 8
             return size
 
-        def write_to(self, out: BytesIO) -> None:
+        def write_to(self, out: bytearray) -> None:
             if self.quantile:
                 out += b"\t"
                 out += struct.pack("<d", self.quantile)
@@ -1204,7 +1200,7 @@ class Exemplar(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.time_unix_nano:
             out += b"\x11"
             out += struct.pack("<Q", self.time_unix_nano)

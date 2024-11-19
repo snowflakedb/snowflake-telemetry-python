@@ -4,11 +4,7 @@
 from __future__ import annotations
 
 import struct
-from io import BytesIO
-from typing import (
-    List,
-    Optional,
-)
+from typing import List
 
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import *
 from snowflake.telemetry._internal.serialize import (
@@ -49,7 +45,7 @@ class Resource(MessageMarshaler):
             size += len(b"\x10") + Varint.size_varint_u32(self.dropped_attributes_count)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._attributes:
             for v in self._attributes:
                 out += b"\n"

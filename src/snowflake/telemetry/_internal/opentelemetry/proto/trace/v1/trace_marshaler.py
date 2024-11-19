@@ -4,11 +4,7 @@
 from __future__ import annotations
 
 import struct
-from io import BytesIO
-from typing import (
-    List,
-    Optional,
-)
+from typing import List
 
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import *
 from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import *
@@ -51,7 +47,7 @@ class TracesData(MessageMarshaler):
             )
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._resource_spans:
             for v in self._resource_spans:
                 out += b"\n"
@@ -105,7 +101,7 @@ class ResourceSpans(MessageMarshaler):
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._resource is not None:
             out += b"\n"
             Varint.write_varint_u32(out, self._resource._get_size())
@@ -168,7 +164,7 @@ class ScopeSpans(MessageMarshaler):
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self._scope is not None:
             out += b"\n"
             Varint.write_varint_u32(out, self._scope._get_size())
@@ -336,7 +332,7 @@ class Span(MessageMarshaler):
             size += len(b"\x85\x01") + 4
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.trace_id:
             out += b"\n"
             Varint.write_varint_u32(out, len(self.trace_id))
@@ -456,7 +452,7 @@ class Span(MessageMarshaler):
                 )
             return size
 
-        def write_to(self, out: BytesIO) -> None:
+        def write_to(self, out: bytearray) -> None:
             if self.time_unix_nano:
                 out += b"\t"
                 out += struct.pack("<Q", self.time_unix_nano)
@@ -537,7 +533,7 @@ class Span(MessageMarshaler):
                 size += len(b"5") + 4
             return size
 
-        def write_to(self, out: BytesIO) -> None:
+        def write_to(self, out: bytearray) -> None:
             if self.trace_id:
                 out += b"\n"
                 Varint.write_varint_u32(out, len(self.trace_id))
@@ -589,7 +585,7 @@ class Status(MessageMarshaler):
             size += len(b"\x18") + Varint.size_varint_u32(v)
         return size
 
-    def write_to(self, out: BytesIO) -> None:
+    def write_to(self, out: bytearray) -> None:
         if self.message:
             v = self.message.encode("utf-8")
             out += b"\x12"
