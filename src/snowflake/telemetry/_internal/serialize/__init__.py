@@ -95,10 +95,6 @@ class MessageMarshaler:
             self._marshaler_cache = {}
         return self._marshaler_cache
 
-    # Init may be inlined by the code generator
-    def __init__(self) -> None:
-        pass
-
     def write_to(self, out: bytearray) -> None:
         ...
     

@@ -82,18 +82,6 @@ def inline_serialize_function(proto_type: str, attr_name: str, field_tag: str) -
     function_definition = function_definition.replace("TAG", field_tag)
     return function_definition
 
-# Inline the init function for a proto message
-def inline_init() -> str:
-    function_definition = inspect.getsource(globals()["MessageMarshaler"].__dict__["__init__"])
-    # Remove the function header and unindent the function body
-    function_definition = function_definition.splitlines()[1:]
-    function_definition = "\n".join(function_definition)
-    function_definition = dedent(function_definition)
-    if function_definition == "pass":
-        # If the init function is empty, return an empty string
-        return ""
-    return function_definition
-
 # Add a presence check to a function definition
 # https://protobuf.dev/programming-guides/proto3/#default
 def add_presence_check(proto_type: str, encode_presence: bool, attr_name: str, function_definition: str) -> str:
@@ -267,7 +255,6 @@ class FieldTemplate:
 @dataclass
 class MessageTemplate:
     name: str
-    super_class_init: str
     fields: List[FieldTemplate] = field(default_factory=list)
     enums: List[EnumTemplate] = field(default_factory=list)
     messages: List[MessageTemplate] = field(default_factory=list)
@@ -280,16 +267,9 @@ class MessageTemplate:
         fields = [FieldTemplate.from_descriptor(field, get_group(field)) for field in descriptor.field]
         fields.sort(key=lambda field: field.number)
 
-        # Inline the superclass MessageMarshaler init function
-        if INLINE_OPTIMIZATION:
-            super_class_init = inline_init()
-        else:
-            super_class_init = "super().__init__()"
-
         name = descriptor.name
         return MessageTemplate(
             name=name,
-            super_class_init=super_class_init,
             fields=fields,
             enums=[EnumTemplate.from_descriptor(enum) for enum in descriptor.enum_type],
             messages=[MessageTemplate.from_descriptor(message) for message in descriptor.nested_type],
