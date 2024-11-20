@@ -26,7 +26,6 @@ class ExportTraceServiceRequest(MessageMarshaler):
         resource_spans: List[ResourceSpans] = None,
     ):
         self._resource_spans: List[ResourceSpans] = resource_spans
-        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -59,7 +58,6 @@ class ExportTraceServiceResponse(MessageMarshaler):
         partial_success: ExportTracePartialSuccess = None,
     ):
         self._partial_success: ExportTracePartialSuccess = partial_success
-        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -89,7 +87,6 @@ class ExportTracePartialSuccess(MessageMarshaler):
     ):
         self.rejected_spans: int = rejected_spans
         self.error_message: str = error_message
-        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -97,7 +94,6 @@ class ExportTracePartialSuccess(MessageMarshaler):
             size += len(b"\x08") + Varint.size_varint_i64(self.rejected_spans)
         if self.error_message:
             v = self.error_message.encode("utf-8")
-            self._marshaler_cache[b"\x12"] = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -106,7 +102,7 @@ class ExportTracePartialSuccess(MessageMarshaler):
             out += b"\x08"
             Varint.write_varint_i64(out, self.rejected_spans)
         if self.error_message:
-            v = self._marshaler_cache[b"\x12"]
+            v = self.error_message.encode("utf-8")
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v
