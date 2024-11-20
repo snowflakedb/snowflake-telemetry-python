@@ -87,9 +87,11 @@ class Varint:
 
 # Base class for all custom messages
 class MessageMarshaler:
+    _marshaler_cache: Dict[bytes, Any]
+
     # Init may be inlined by the code generator
     def __init__(self) -> None:
-        pass
+        self._marshaler_cache = {}
 
     def write_to(self, out: bytearray) -> None:
         ...
@@ -103,6 +105,8 @@ class MessageMarshaler:
         return self._size
     
     def SerializeToString(self) -> bytes:
+        # size MUST be calculated before serializing since some preprocessing is done
+        self._get_size() 
         stream = bytearray()
         self.write_to(stream)
         return bytes(stream)
@@ -163,8 +167,10 @@ class MessageMarshaler:
     def size_bytes(self, TAG: bytes, FIELD_ATTR: bytes) -> int:
         return len(TAG) + Varint.size_varint_u32(len(FIELD_ATTR)) + len(FIELD_ATTR)
 
+    # This function should not be used for repeated strings due to caching by tag
     def size_string(self, TAG: bytes, FIELD_ATTR: str) -> int:
         v = FIELD_ATTR.encode("utf-8")
+        self._marshaler_cache[TAG] = v
         return len(TAG) + Varint.size_varint_u32(len(v)) + len(v)
 
     def size_message(self, TAG: bytes, FIELD_ATTR: MessageMarshaler) -> int: 
@@ -181,6 +187,7 @@ class MessageMarshaler:
 
     def size_repeated_uint64(self, TAG: bytes, FIELD_ATTR: List[int]):
         s = sum(Varint.size_varint_u64(uint32) for uint32 in FIELD_ATTR)
+        self._marshaler_cache[TAG] = s
         return len(TAG) + s + Varint.size_varint_u32(s)
 
     def serialize_bool(self, out: bytearray, TAG: bytes, FIELD_ATTR: bool) -> None:
@@ -247,8 +254,9 @@ class MessageMarshaler:
         Varint.write_varint_u32(out, len(FIELD_ATTR))
         out += FIELD_ATTR
 
+    # This function should not be used for repeated strings due to caching by tag
     def serialize_string(self, out: bytearray, TAG: bytes, FIELD_ATTR: str) -> None:
-        v = FIELD_ATTR.encode("utf-8")
+        v = self._marshaler_cache[TAG]
         out += TAG
         Varint.write_varint_u32(out, len(v))
         out += v
@@ -278,7 +286,7 @@ class MessageMarshaler:
 
     def serialize_repeated_uint64(self, out: bytearray, TAG: bytes, FIELD_ATTR: List[int]) -> None:
         out += TAG
-        Varint.write_varint_u32(out, sum(Varint.size_varint_u64(uint32) for uint32 in FIELD_ATTR))
+        Varint.write_varint_u32(out, self._marshaler_cache[TAG])
         for v in FIELD_ATTR:
             Varint.write_varint_u64(out, v)
 

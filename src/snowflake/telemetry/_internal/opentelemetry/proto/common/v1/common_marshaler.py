@@ -50,11 +50,13 @@ class AnyValue(MessageMarshaler):
         self._array_value: ArrayValue = array_value
         self._kvlist_value: KeyValueList = kvlist_value
         self.bytes_value: bytes = bytes_value
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
         if self.string_value is not None:
             v = self.string_value.encode("utf-8")
+            self._marshaler_cache[b"\n"] = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self.bool_value is not None:
             size += len(b"\x10") + 1
@@ -84,7 +86,7 @@ class AnyValue(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.string_value is not None:
-            v = self.string_value.encode("utf-8")
+            v = self._marshaler_cache[b"\n"]
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -123,6 +125,7 @@ class ArrayValue(MessageMarshaler):
         values: List[AnyValue] = None,
     ):
         self._values: List[AnyValue] = values
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -155,6 +158,7 @@ class KeyValueList(MessageMarshaler):
         values: List[KeyValue] = None,
     ):
         self._values: List[KeyValue] = values
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -191,11 +195,13 @@ class KeyValue(MessageMarshaler):
     ):
         self.key: str = key
         self._value: AnyValue = value
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
         if self.key:
             v = self.key.encode("utf-8")
+            self._marshaler_cache[b"\n"] = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self._value is not None:
             size += (
@@ -207,7 +213,7 @@ class KeyValue(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.key:
-            v = self.key.encode("utf-8")
+            v = self._marshaler_cache[b"\n"]
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -240,14 +246,17 @@ class InstrumentationScope(MessageMarshaler):
         self.version: str = version
         self._attributes: List[KeyValue] = attributes
         self.dropped_attributes_count: int = dropped_attributes_count
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
         if self.name:
             v = self.name.encode("utf-8")
+            self._marshaler_cache[b"\n"] = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self.version:
             v = self.version.encode("utf-8")
+            self._marshaler_cache[b"\x12"] = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         if self._attributes:
             size += sum(
@@ -262,12 +271,12 @@ class InstrumentationScope(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.name:
-            v = self.name.encode("utf-8")
+            v = self._marshaler_cache[b"\n"]
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
         if self.version:
-            v = self.version.encode("utf-8")
+            v = self._marshaler_cache[b"\x12"]
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v

@@ -26,6 +26,7 @@ class ExportMetricsServiceRequest(MessageMarshaler):
         resource_metrics: List[ResourceMetrics] = None,
     ):
         self._resource_metrics: List[ResourceMetrics] = resource_metrics
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -58,6 +59,7 @@ class ExportMetricsServiceResponse(MessageMarshaler):
         partial_success: ExportMetricsPartialSuccess = None,
     ):
         self._partial_success: ExportMetricsPartialSuccess = partial_success
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -87,6 +89,7 @@ class ExportMetricsPartialSuccess(MessageMarshaler):
     ):
         self.rejected_data_points: int = rejected_data_points
         self.error_message: str = error_message
+        self._marshaler_cache = {}
 
     def calculate_size(self) -> int:
         size = 0
@@ -94,6 +97,7 @@ class ExportMetricsPartialSuccess(MessageMarshaler):
             size += len(b"\x08") + Varint.size_varint_i64(self.rejected_data_points)
         if self.error_message:
             v = self.error_message.encode("utf-8")
+            self._marshaler_cache[b"\x12"] = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -102,7 +106,7 @@ class ExportMetricsPartialSuccess(MessageMarshaler):
             out += b"\x08"
             Varint.write_varint_i64(out, self.rejected_data_points)
         if self.error_message:
-            v = self.error_message.encode("utf-8")
+            v = self._marshaler_cache[b"\x12"]
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v

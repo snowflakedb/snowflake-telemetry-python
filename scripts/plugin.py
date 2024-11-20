@@ -89,9 +89,6 @@ def inline_init() -> str:
     function_definition = function_definition.splitlines()[1:]
     function_definition = "\n".join(function_definition)
     function_definition = dedent(function_definition)
-    # If __init__ is empty, return an empty string
-    if function_definition == "pass":
-        return ""
     return function_definition
 
 # Add a presence check to a function definition
