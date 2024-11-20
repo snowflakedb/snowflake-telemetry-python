@@ -167,8 +167,10 @@ class MessageMarshaler:
     def size_bytes(self, TAG: bytes, FIELD_ATTR: bytes) -> int:
         return len(TAG) + Varint.size_varint_u32(len(FIELD_ATTR)) + len(FIELD_ATTR)
 
+    # This function should not be used for repeated strings due to caching by tag
     def size_string(self, TAG: bytes, FIELD_ATTR: str) -> int:
         v = FIELD_ATTR.encode("utf-8")
+        self._marshaler_cache[TAG] = v
         return len(TAG) + Varint.size_varint_u32(len(v)) + len(v)
 
     def size_message(self, TAG: bytes, FIELD_ATTR: MessageMarshaler) -> int: 
@@ -252,8 +254,9 @@ class MessageMarshaler:
         Varint.write_varint_u32(out, len(FIELD_ATTR))
         out += FIELD_ATTR
 
+    # This function should not be used for repeated strings due to caching by tag
     def serialize_string(self, out: bytearray, TAG: bytes, FIELD_ATTR: str) -> None:
-        v = FIELD_ATTR.encode("utf-8")
+        v = self._marshaler_cache[TAG]
         out += TAG
         Varint.write_varint_u32(out, len(v))
         out += v

@@ -124,6 +124,7 @@ class ResourceLogs(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -138,7 +139,7 @@ class ResourceLogs(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self.schema_url.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -187,6 +188,7 @@ class ScopeLogs(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -201,7 +203,7 @@ class ScopeLogs(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self.schema_url.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -266,6 +268,7 @@ class LogRecord(MessageMarshaler):
             size += len(b"\x10") + Varint.size_varint_u32(v)
         if self.severity_text:
             v = self.severity_text.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self._body is not None:
             size += (
@@ -311,7 +314,7 @@ class LogRecord(MessageMarshaler):
             out += b"\x10"
             Varint.write_varint_u32(out, v)
         if self.severity_text:
-            v = self.severity_text.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v

@@ -56,6 +56,7 @@ class AnyValue(MessageMarshaler):
         size = 0
         if self.string_value is not None:
             v = self.string_value.encode("utf-8")
+            self._marshaler_cache[b"\n"] = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self.bool_value is not None:
             size += len(b"\x10") + 1
@@ -85,7 +86,7 @@ class AnyValue(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.string_value is not None:
-            v = self.string_value.encode("utf-8")
+            v = self._marshaler_cache[b"\n"]
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -200,6 +201,7 @@ class KeyValue(MessageMarshaler):
         size = 0
         if self.key:
             v = self.key.encode("utf-8")
+            self._marshaler_cache[b"\n"] = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self._value is not None:
             size += (
@@ -211,7 +213,7 @@ class KeyValue(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.key:
-            v = self.key.encode("utf-8")
+            v = self._marshaler_cache[b"\n"]
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -250,9 +252,11 @@ class InstrumentationScope(MessageMarshaler):
         size = 0
         if self.name:
             v = self.name.encode("utf-8")
+            self._marshaler_cache[b"\n"] = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self.version:
             v = self.version.encode("utf-8")
+            self._marshaler_cache[b"\x12"] = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         if self._attributes:
             size += sum(
@@ -267,12 +271,12 @@ class InstrumentationScope(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.name:
-            v = self.name.encode("utf-8")
+            v = self._marshaler_cache[b"\n"]
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
         if self.version:
-            v = self.version.encode("utf-8")
+            v = self._marshaler_cache[b"\x12"]
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v

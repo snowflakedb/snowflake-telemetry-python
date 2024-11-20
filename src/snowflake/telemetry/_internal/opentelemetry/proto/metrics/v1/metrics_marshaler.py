@@ -102,6 +102,7 @@ class ResourceMetrics(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -116,7 +117,7 @@ class ResourceMetrics(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self.schema_url.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -165,6 +166,7 @@ class ScopeMetrics(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -179,7 +181,7 @@ class ScopeMetrics(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self.schema_url.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -253,12 +255,15 @@ class Metric(MessageMarshaler):
         size = 0
         if self.name:
             v = self.name.encode("utf-8")
+            self._marshaler_cache[b"\n"] = v
             size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
         if self.description:
             v = self.description.encode("utf-8")
+            self._marshaler_cache[b"\x12"] = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         if self.unit:
             v = self.unit.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self._gauge is not None:
             size += (
@@ -301,17 +306,17 @@ class Metric(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.name:
-            v = self.name.encode("utf-8")
+            v = self._marshaler_cache[b"\n"]
             out += b"\n"
             Varint.write_varint_u32(out, len(v))
             out += v
         if self.description:
-            v = self.description.encode("utf-8")
+            v = self._marshaler_cache[b"\x12"]
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v
         if self.unit:
-            v = self.unit.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v

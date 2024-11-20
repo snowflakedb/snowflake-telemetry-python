@@ -98,6 +98,7 @@ class ResourceSpans(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -112,7 +113,7 @@ class ResourceSpans(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self.schema_url.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -161,6 +162,7 @@ class ScopeSpans(MessageMarshaler):
             )
         if self.schema_url:
             v = self.schema_url.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
@@ -175,7 +177,7 @@ class ScopeSpans(MessageMarshaler):
                 Varint.write_varint_u32(out, v._get_size())
                 v.write_to(out)
         if self.schema_url:
-            v = self.schema_url.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -276,6 +278,7 @@ class Span(MessageMarshaler):
             )
         if self.trace_state:
             v = self.trace_state.encode("utf-8")
+            self._marshaler_cache[b"\x1a"] = v
             size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
         if self.parent_span_id:
             size += (
@@ -285,6 +288,7 @@ class Span(MessageMarshaler):
             )
         if self.name:
             v = self.name.encode("utf-8")
+            self._marshaler_cache[b"*"] = v
             size += len(b"*") + Varint.size_varint_u32(len(v)) + len(v)
         if self.kind:
             v = self.kind
@@ -342,7 +346,7 @@ class Span(MessageMarshaler):
             Varint.write_varint_u32(out, len(self.span_id))
             out += self.span_id
         if self.trace_state:
-            v = self.trace_state.encode("utf-8")
+            v = self._marshaler_cache[b"\x1a"]
             out += b"\x1a"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -351,7 +355,7 @@ class Span(MessageMarshaler):
             Varint.write_varint_u32(out, len(self.parent_span_id))
             out += self.parent_span_id
         if self.name:
-            v = self.name.encode("utf-8")
+            v = self._marshaler_cache[b"*"]
             out += b"*"
             Varint.write_varint_u32(out, len(v))
             out += v
@@ -438,6 +442,7 @@ class Span(MessageMarshaler):
                 size += len(b"\t") + 8
             if self.name:
                 v = self.name.encode("utf-8")
+                self._marshaler_cache[b"\x12"] = v
                 size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
             if self._attributes:
                 size += sum(
@@ -457,7 +462,7 @@ class Span(MessageMarshaler):
                 out += b"\t"
                 out += struct.pack("<Q", self.time_unix_nano)
             if self.name:
-                v = self.name.encode("utf-8")
+                v = self._marshaler_cache[b"\x12"]
                 out += b"\x12"
                 Varint.write_varint_u32(out, len(v))
                 out += v
@@ -517,6 +522,7 @@ class Span(MessageMarshaler):
                 )
             if self.trace_state:
                 v = self.trace_state.encode("utf-8")
+                self._marshaler_cache[b"\x1a"] = v
                 size += len(b"\x1a") + Varint.size_varint_u32(len(v)) + len(v)
             if self._attributes:
                 size += sum(
@@ -543,7 +549,7 @@ class Span(MessageMarshaler):
                 Varint.write_varint_u32(out, len(self.span_id))
                 out += self.span_id
             if self.trace_state:
-                v = self.trace_state.encode("utf-8")
+                v = self._marshaler_cache[b"\x1a"]
                 out += b"\x1a"
                 Varint.write_varint_u32(out, len(v))
                 out += v
@@ -577,6 +583,7 @@ class Status(MessageMarshaler):
         size = 0
         if self.message:
             v = self.message.encode("utf-8")
+            self._marshaler_cache[b"\x12"] = v
             size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
         if self.code:
             v = self.code
@@ -587,7 +594,7 @@ class Status(MessageMarshaler):
 
     def write_to(self, out: bytearray) -> None:
         if self.message:
-            v = self.message.encode("utf-8")
+            v = self._marshaler_cache[b"\x12"]
             out += b"\x12"
             Varint.write_varint_u32(out, len(v))
             out += v
