@@ -12,7 +12,6 @@ requirements:
     run:
         - python
         - opentelemetry-api ==1.26.0
-        - opentelemetry-exporter-otlp-proto-common ==1.26.0
         - opentelemetry-sdk ==1.26.0
 
 about:
