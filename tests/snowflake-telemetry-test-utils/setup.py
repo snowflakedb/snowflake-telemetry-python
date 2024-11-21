@@ -17,6 +17,11 @@ setup(
     install_requires=[
         "pytest >= 7.0.0",
         "snowflake-telemetry-python == 0.6.0.dev",
+        "Jinja2 == 3.1.4",
+        "grpcio-tools >= 1.62.3", 
+        "black >= 24.1.0", 
+        "isort >= 5.12.0",
+        "hypothesis >= 6.0.0",
     ],
     packages=find_namespace_packages(
         where='src'
