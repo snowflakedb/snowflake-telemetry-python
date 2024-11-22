@@ -39,7 +39,7 @@ from snowflake.telemetry._internal.opentelemetry.proto.collector.metrics.v1.metr
     ExportMetricsServiceRequest,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import InstrumentationScope
-import snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_marshaler as pb2
+from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1 import metrics_marshaler as pb2
 from opentelemetry.sdk.metrics.export import (
     MetricsData,
     Gauge,
