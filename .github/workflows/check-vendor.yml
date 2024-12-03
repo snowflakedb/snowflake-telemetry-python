@@ -1,0 +1,32 @@
+# This workflow will delete and regenerate the opentelemetry-exporter-otlp-proto-common code using scripts/vendor_otlp_proto_common.sh.
+# If generating the code produces any changes from what is currently checked in, the workflow will fail and prompt the user to regenerate the code.
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Check OTLP Proto Common Vendored Code
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "scripts/vendor_otlp_proto_common.sh"
+      - "src/snowflake/telemetry/_internal/opentelemetry/exporter/**"
+      - ".github/workflows/check-vendor.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "scripts/vendor_otlp_proto_common.sh"
+      - "src/snowflake/telemetry/_internal/opentelemetry/exporter/**"
+      - ".github/workflows/check-vendor.yml"
+
+jobs:
+  check-codegen:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run vendor script
+      run: |
+        rm -rf src/snowflake/telemetry/_internal/opentelemetry/exporter/
+        ./scripts/vendor_otlp_proto_common.sh
+    - name: Check for changes
+      run: |
+        git diff --exit-code || { echo "Code generation produced changes! Regenerate the code using ./scripts/vendor_otlp_proto_common.sh"; exit 1; }
