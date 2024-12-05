@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
+#
+
 from __future__ import annotations
 
 import struct
@@ -288,4 +292,3 @@ class MessageMarshaler:
         Varint.write_varint_u32(out, self.marshaler_cache[TAG])
         for v in FIELD_ATTR:
             Varint.write_varint_u64(out, v)
-
