@@ -31,6 +31,7 @@ import isort.api
 INLINE_OPTIMIZATION = True
 FILE_PATH_PREFIX = "snowflake.telemetry._internal"
 FILE_NAME_SUFFIX = "_marshaler"
+OPENTELEMETRY_PROTO_DIR = os.environ["OPENTELEMETRY_PROTO_DIR"]
 
 # Inline utility functions
 
@@ -293,7 +294,7 @@ class FileTemplate:
         # In the case of the opentelemetry-proto files, the preamble is the license header
         # Each line of the preamble is prefixed with "//"
         preamble = ""
-        with open(f'/tmp/opentelemetry-proto/{descriptor.name}', "r") as f:
+        with open(f'{OPENTELEMETRY_PROTO_DIR}/{descriptor.name}', "r") as f:
             line = f.readline()
             while line and line.startswith("//"):
                 preamble += line.replace("//", "#", 1)
