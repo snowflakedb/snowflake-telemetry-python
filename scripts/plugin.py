@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
+#
+
 from __future__ import annotations
 
 import re
@@ -281,9 +285,19 @@ class FileTemplate:
     enums: List[EnumTemplate] = field(default_factory=list)
     imports: List[str] = field(default_factory=list)
     name: str = ""
+    preamble: str = ""
 
     @staticmethod
     def from_descriptor(descriptor: FileDescriptorProto) -> "FileTemplate":
+        # Extract the preamble comment from the proto file
+        # In the case of the opentelemetry-proto files, the preamble is the license header
+        # Each line of the preamble is prefixed with "//"
+        preamble = ""
+        with open(f'/tmp/opentelemetry-proto/{descriptor.name}', "r") as f:
+            line = f.readline()
+            while line and line.startswith("//"):
+                preamble += line.replace("//", "#", 1)
+                line = f.readline()
 
         # Extract the import paths for the proto file
         imports = []
@@ -300,6 +314,7 @@ class FileTemplate:
             enums=[EnumTemplate.from_descriptor(enum) for enum in descriptor.enum_type],
             imports=imports,
             name=descriptor.name,
+            preamble=preamble,
         )
 
 def main():
