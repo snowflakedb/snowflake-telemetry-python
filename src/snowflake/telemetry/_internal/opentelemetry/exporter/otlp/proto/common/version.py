@@ -11,5 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# This file has been modified from the original source code at
+#
+#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.26.0
+#
+# by Snowflake Inc.
 
 __version__ = "1.26.0"

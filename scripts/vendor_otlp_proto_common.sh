@@ -50,5 +50,9 @@ fi
 #   opentelemetry.proto.*_pb2 to snowflake.telemetry._internal.opentelemetry.proto.*_marshaler
 
 find opentelemetry/exporter -type f -name "*.py" -exec $SED_CMD 's/opentelemetry.exporter/snowflake.telemetry._internal.opentelemetry.exporter/g' {} +
-find opentelemetry/exporter -type f -name "*.py" -exec $SED_CMD -i 's/opentelemetry\.proto\(.*\)_pb2/snowflake.telemetry._internal.opentelemetry.proto\1_marshaler/g' {} +
+find opentelemetry/exporter -type f -name "*.py" -exec $SED_CMD 's/opentelemetry\.proto\(.*\)_pb2/snowflake.telemetry._internal.opentelemetry.proto\1_marshaler/g' {} +
 
+
+# Add a notice to the top of every file in compliance with Apache 2.0 to indicate that the file has been modified
+# https://www.apache.org/licenses/LICENSE-2.0
+find opentelemetry/exporter -type f -name "*.py" -exec $SED_CMD '14s|^|#\n# This file has been modified from the original source code at\n#\n#     https://github.com/open-telemetry/opentelemetry-python/tree/'"$REPO_BRANCH_OR_COMMIT"'\n#\n# by Snowflake Inc.\n|' {} +
