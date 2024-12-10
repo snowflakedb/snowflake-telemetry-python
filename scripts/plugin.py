@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-#
-# Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
-#
 
 from __future__ import annotations
 
