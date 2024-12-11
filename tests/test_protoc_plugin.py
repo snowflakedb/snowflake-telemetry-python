@@ -60,6 +60,8 @@ message InstrumentationScope {
             proto_file_dir = os.path.dirname(proto_file.name)
             proto_file_name = os.path.basename(proto_file.name)
 
+            os.environ["OPENTELEMETRY_PROTO_DIR"] = proto_file_dir
+
             # Run protoc with custom plugin to generate serialization code for messages
             result = subprocess.run([
                 "python",
