@@ -10,12 +10,14 @@ on:
     paths:
       - "scripts/**"
       - "src/snowflake/telemetry/_internal/opentelemetry/proto/**"
+      - "src/snowflake/telemetry/serialize/**"
       - ".github/workflows/check-codegen.yml"
   pull_request:
     branches: [ "main" ]
     paths:
       - "scripts/**"
       - "src/snowflake/telemetry/_internal/opentelemetry/proto/**"
+      - "src/snowflake/telemetry/serialize/**"
       - ".github/workflows/check-codegen.yml"
 
 jobs:
