@@ -15,6 +15,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
+        "opentelemetry-exporter-otlp-proto-common == 1.26.0",
         "pytest >= 7.0.0",
         "snowflake-telemetry-python == 0.6.0.dev",
         "Jinja2 == 3.1.4",
@@ -22,6 +23,7 @@ setup(
         "black >= 24.1.0", 
         "isort >= 5.12.0",
         "hypothesis >= 6.0.0",
+        "google-benchmark",
     ],
     packages=find_namespace_packages(
         where='src'
