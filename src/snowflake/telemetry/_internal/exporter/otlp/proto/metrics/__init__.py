@@ -20,7 +20,7 @@ import opentelemetry
 from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.metrics_encoder import (
     encode_metrics,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_marshaler import MetricsData as PB2MetricsData
+from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_proxy import MetricsData as PB2MetricsData
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
     MetricExportResult,

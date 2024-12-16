@@ -19,7 +19,7 @@ import typing
 from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.trace_encoder import (
     encode_spans,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import TracesData
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_proxy import TracesData
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import (
     SpanExportResult,

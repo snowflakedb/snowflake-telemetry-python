@@ -9,13 +9,14 @@ try:
     minor = int(protobuf_version.split('.')[1])
     if major >= 6:
         raise ImportError
-    # protobuf >=5.0, <6.0 is supported by v5
+    # support protobuf >=3.19, <6.0
     if major >= 5 and major < 6:
         PROTOBUF_VERSION_MAJOR = 5
-    # protobuf >=3.19, <5.0 is supported by v3
+    elif major >= 4:
+        PROTOBUF_VERSION_MAJOR = 4
     elif major == 3 and minor >= 19:
         PROTOBUF_VERSION_MAJOR = 3
     else:
         raise ImportError
-except ImportError:
+except:
     PROTOBUF_VERSION_MAJOR = -1

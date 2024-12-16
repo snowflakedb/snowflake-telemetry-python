@@ -17,11 +17,9 @@
 import unittest
 from typing import List, Tuple
 
-from opentelemetry.exporter.otlp.proto.common._internal import (
+from snowflake.telemetry.test.exporter_otlp_proto_common_helper import (
     _encode_span_id,
     _encode_trace_id,
-)
-from opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import (
     _SPAN_KIND_MAP,
     _encode_status,
 )

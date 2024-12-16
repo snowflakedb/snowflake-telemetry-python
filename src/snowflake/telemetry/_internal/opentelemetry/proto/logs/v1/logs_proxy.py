@@ -7,7 +7,7 @@
 from snowflake.telemetry._internal.proto_proxy import PROTOBUF_VERSION_MAJOR
 
 
-if PROTOBUF_VERSION_MAJOR == 3:
+if PROTOBUF_VERSION_MAJOR == 3 or PROTOBUF_VERSION_MAJOR == 4:
     from snowflake.telemetry._internal.proto_impl.v3.opentelemetry.proto.logs.v1.logs_pb2 import *
 elif PROTOBUF_VERSION_MAJOR == 5:
     from snowflake.telemetry._internal.proto_impl.v5.opentelemetry.proto.logs.v1.logs_pb2 import *
