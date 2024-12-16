@@ -46,7 +46,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: "3.11"
+        python-version: "3.9"
     - name: Run pb codegen script
       run: |
         rm -rf src/snowflake/telemetry/_internal/proto_impl/v3/
