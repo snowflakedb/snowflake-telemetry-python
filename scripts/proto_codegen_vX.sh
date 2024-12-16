@@ -21,6 +21,7 @@ PROTO_REPO_DIR=${PROTO_REPO_DIR:-"/tmp/opentelemetry-proto"}
 # root of opentelemetry-python repo
 repo_root="$(git rev-parse --show-toplevel)"
 venv_dir="/tmp/proto_codegen_venv"
+code_dir="proto_impl/v$PB_VERSION_MAJOR"
 
 # run on exit even if crash
 cleanup() {
@@ -30,7 +31,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Creating temporary virtualenv at $venv_dir using $(python3 --version)"
-python3.9 -m venv $venv_dir
+python3 -m venv $venv_dir
 source $venv_dir/bin/activate
 pip install --upgrade pip
 python -m pip install --upgrade setuptools
@@ -58,15 +59,15 @@ fi
 cd $repo_root/src/snowflake/telemetry/_internal
 
 # clean up old generated code
-mkdir -p proto_impl/v$PB_VERSION_MAJOR/opentelemetry/proto
-find proto_impl/v$PB_VERSION_MAJOR/opentelemetry/proto/ -regex ".*_pb2\.py" -exec rm {} +
-find proto_impl/v$PB_VERSION_MAJOR/opentelemetry/proto/ -regex ".*_pb2\.pyi" -exec rm {} +
+mkdir -p $code_dir/opentelemetry/proto
+find $code_dir -regex ".*_pb2\.py" -exec rm {} +
+find $code_dir -regex ".*_pb2\.pyi" -exec rm {} +
 
 # generate proto code for all protos
 all_protos=$(find $PROTO_REPO_DIR/ -iname "*.proto")
 python -m grpc_tools.protoc \
     -I $PROTO_REPO_DIR \
-    --python_out=./proto_impl/v$PB_VERSION_MAJOR \
+    --python_out=./$code_dir \
     $all_protos
 
 # since we do not have the generated files in the base directory
@@ -80,7 +81,7 @@ else
   SED_CMD="sed -i"
 fi
 
-find proto_impl/v$PB_VERSION_MAJOR -type f \( -name "*.py" -o -name "*.pyi" \) -exec $SED_CMD 's/^import \([^ ]*\)_pb2 as \([^ ]*\)$/import snowflake.telemetry._internal.proto_impl.v'"$PB_VERSION_MAJOR"'.\1_pb2 as \2/' {} +
-find proto_impl/v$PB_VERSION_MAJOR -type f \( -name "*.py" -o -name "*.pyi" \) -exec $SED_CMD 's/^from \([^ ]*\) import \([^ ]*\)_pb2 as \([^ ]*\)$/from snowflake.telemetry._internal.proto_impl.v'"$PB_VERSION_MAJOR"'.\1 import \2_pb2 as \3/' {} +
+find $code_dir -type f \( -name "*.py" -o -name "*.pyi" \) -exec $SED_CMD 's/^import \([^ ]*\)_pb2 as \([^ ]*\)$/import snowflake.telemetry._internal.proto_impl.v'"$PB_VERSION_MAJOR"'.\1_pb2 as \2/' {} +
+find $code_dir -type f \( -name "*.py" -o -name "*.pyi" \) -exec $SED_CMD 's/^from \([^ ]*\) import \([^ ]*\)_pb2 as \([^ ]*\)$/from snowflake.telemetry._internal.proto_impl.v'"$PB_VERSION_MAJOR"'.\1 import \2_pb2 as \3/' {} +
 
-find proto_impl/v$PB_VERSION_MAJOR -type f \( -name "*.py''" -o -name "*.pyi''" \) -exec rm {} +
+find $code_dir -type f \( -name "*.py''" -o -name "*.pyi''" \) -exec rm {} +

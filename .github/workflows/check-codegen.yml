@@ -10,6 +10,7 @@ on:
     paths:
       - "scripts/**"
       - "src/snowflake/telemetry/_internal/opentelemetry/proto/**"
+      - "src/snowflake/telemetry/_internal/proto_impl/**"
       - "src/snowflake/telemetry/serialize/**"
       - ".github/workflows/check-codegen.yml"
   pull_request:
@@ -17,6 +18,7 @@ on:
     paths:
       - "scripts/**"
       - "src/snowflake/telemetry/_internal/opentelemetry/proto/**"
+      - "src/snowflake/telemetry/_internal/proto_impl/**"
       - "src/snowflake/telemetry/serialize/**"
       - ".github/workflows/check-codegen.yml"
 
@@ -29,10 +31,28 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: "3.11"
-    - name: Run codegen script
+    - name: Run py codegen script
       run: |
         rm -rf src/snowflake/telemetry/_internal/opentelemetry/proto/
+        rm -rf src/snowflake/telemetry/_internal/proto_impl/py/
         ./scripts/proto_codegen.sh
     - name: Check for changes
       run: |
         git diff --exit-code || { echo "Code generation produced changes! Regenerate the code using ./scripts/proto_codegen.sh"; exit 1; }
+  check-codegen-pb:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    - name: Run pb codegen script
+      run: |
+        rm -rf src/snowflake/telemetry/_internal/proto_impl/v3/
+        rm -rf src/snowflake/telemetry/_internal/proto_impl/v5/
+        ./scripts/proto_codegen_vX.sh 3
+        ./scripts/proto_codegen_vX.sh 5
+    - name: Check for changes
+      run: |
+        git diff --exit-code || { echo "Code generation produced changes! Regenerate the code using ./scripts/proto_codegen_vX.sh <version>"; exit 1; }
