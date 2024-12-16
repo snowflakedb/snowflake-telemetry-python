@@ -41,11 +41,11 @@ from opentelemetry.sdk.environment_variables import (
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.collector.metrics.v1.metrics_service_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.collector.metrics.v1.metrics_service_proxy import (
     ExportMetricsServiceRequest,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import InstrumentationScope
-from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1 import metrics_marshaler as pb2
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_proxy import InstrumentationScope
+from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1 import metrics_proxy as pb2
 from opentelemetry.sdk.metrics.export import (
     MetricsData,
     Gauge,
@@ -54,7 +54,7 @@ from opentelemetry.sdk.metrics.export import (
     ExponentialHistogram as ExponentialHistogramType,
 )
 from typing import Dict
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_proxy import (
     Resource as PB2Resource,
 )
 from opentelemetry.sdk.environment_variables import (

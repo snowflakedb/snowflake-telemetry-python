@@ -28,15 +28,14 @@ from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._int
     _encode_value,
     _encode_attributes,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.collector.logs.v1.logs_service_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.collector.logs.v1.logs_service_proxy import (
     ExportLogsServiceRequest,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_proxy import (
     ScopeLogs,
     ResourceLogs,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import LogRecord as PB2LogRecord
-
+from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_proxy import LogRecord as PB2LogRecord
 from opentelemetry.sdk._logs import LogData
 
 

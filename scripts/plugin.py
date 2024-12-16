@@ -21,13 +21,24 @@ from google.protobuf.descriptor_pb2 import (
     EnumValueDescriptorProto,
     DescriptorProto,
 )
-from jinja2 import Environment, FileSystemLoader
+import jinja2
 import black
 import isort.api
 
 INLINE_OPTIMIZATION = True
-FILE_PATH_PREFIX = "snowflake.telemetry._internal"
-FILE_NAME_SUFFIX = "_marshaler"
+# The location of the pure python implementation of the protobuf messages
+PY_PATH_PREFIX = "snowflake.telemetry._internal.proto_impl.py"
+PY_PATH_RELATIVE = "proto_impl/py"
+# The location of the protobuf v3.X.X and v4.X.X implementation of the protobuf messages
+PB3_PATH_PREFIX = "snowflake.telemetry._internal.proto_impl.v3"
+# The location of the protobuf v5.X.X implementation of the protobuf messages
+PB5_PATH_PREFIX = "snowflake.telemetry._internal.proto_impl.v5"
+
+# Suffixes for the generated files
+PROXY_FILE_SUFFIX = "_proxy"
+PY_FILE_SUFFIX = "_marshaler"
+PB_FILE_SUFFIX = "_pb2"
+
 OPENTELEMETRY_PROTO_DIR = os.environ["OPENTELEMETRY_PROTO_DIR"]
 
 # Inline utility functions
@@ -284,6 +295,9 @@ class FileTemplate:
     imports: List[str] = field(default_factory=list)
     name: str = ""
     preamble: str = ""
+    path_py: str = ""
+    path_pb3: str = ""
+    path_pb5: str = ""
 
     @staticmethod
     def from_descriptor(descriptor: FileDescriptorProto) -> "FileTemplate":
@@ -304,8 +318,13 @@ class FileTemplate:
             if descriptor.name.startswith(path):
                 continue
             path = path.replace("/", ".")
-            path = f"{FILE_PATH_PREFIX}.{path}{FILE_NAME_SUFFIX}"
+            path = f"{PY_PATH_PREFIX}.{path}{PY_FILE_SUFFIX}"
             imports.append(path)
+
+        path = descriptor.name.replace(".proto", "").replace("/", ".")
+        path_py = f"{PY_PATH_PREFIX}.{path}{PY_FILE_SUFFIX}"
+        path_pb = f"{PB3_PATH_PREFIX}.{path}{PB_FILE_SUFFIX}"
+        path_pb5 = f"{PB5_PATH_PREFIX}.{path}{PB_FILE_SUFFIX}"
 
         return FileTemplate(
             messages=[MessageTemplate.from_descriptor(message) for message in descriptor.message_type],
@@ -313,7 +332,26 @@ class FileTemplate:
             imports=imports,
             name=descriptor.name,
             preamble=preamble,
+            path_py=path_py,
+            path_pb3=path_pb,
+            path_pb5=path_pb5,
         )
+
+def format_code_str(code: str) -> str:
+    code = isort.api.sort_code_string(
+        code = code,
+        show_diff=False,
+        profile="black",
+        combine_as_imports=True,
+        lines_after_imports=2,
+        quiet=True,
+        force_grid_wrap=2,
+    )
+    code = black.format_str(
+        src_contents=code,
+        mode=black.Mode(),
+    )
+    return code
 
 def main():
     request = plugin.CodeGeneratorRequest()
@@ -324,30 +362,26 @@ def main():
     # https://github.com/protocolbuffers/protobuf/blob/main/docs/implementing_proto3_presence.md
     response.supported_features = plugin.CodeGeneratorResponse.FEATURE_PROTO3_OPTIONAL
 
-    template_env = Environment(loader=FileSystemLoader(f"{os.path.dirname(os.path.realpath(__file__))}/templates"))
+    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(f"{os.path.dirname(os.path.realpath(__file__))}/templates"))
     jinja_body_template = template_env.get_template("template.py.jinja2")
+    jinja_proxy_template = template_env.get_template("proxy.py.jinja2")
 
     for proto_file in request.proto_file:
-        file_name = re.sub(r"\.proto$", f"{FILE_NAME_SUFFIX}.py", proto_file.name)
-        file_descriptor_proto = proto_file
+        file_template = FileTemplate.from_descriptor(proto_file)
 
-        file_template = FileTemplate.from_descriptor(file_descriptor_proto)
-
+        # Generate the marshaler file
+        file_name = re.sub(r"\.proto$", f"{PY_FILE_SUFFIX}.py", proto_file.name)
+        file_name = f"{PY_PATH_RELATIVE}/{file_name}"
         code = jinja_body_template.render(file_template=file_template)
-        code = isort.api.sort_code_string(
-            code = code,
-            show_diff=False,
-            profile="black",
-            combine_as_imports=True,
-            lines_after_imports=2,
-            quiet=True,
-            force_grid_wrap=2,
-        )
-        code = black.format_str(
-            src_contents=code,
-            mode=black.Mode(),
-        )
+        code = format_code_str(code)
+        response_file = response.file.add()
+        response_file.name = file_name
+        response_file.content = code
 
+        # Generate the proxy file
+        file_name = re.sub(r"\.proto$", f"{PROXY_FILE_SUFFIX}.py", proto_file.name)
+        code = jinja_proxy_template.render(file_template=file_template)
+        code = format_code_str(code)
         response_file = response.file.add()
         response_file.name = file_name
         response_file.content = code
