@@ -48,5 +48,5 @@ jobs:
         pip install .
     - name: Test with pytest
       run: |
-        pip install ./tests/snowflake-telemetry-test-utils
+        pip install "./tests/snowflake-telemetry-test-utils[all]"
         pytest
