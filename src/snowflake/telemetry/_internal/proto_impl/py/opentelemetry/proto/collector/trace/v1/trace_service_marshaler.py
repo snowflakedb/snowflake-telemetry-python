@@ -28,7 +28,7 @@ from __future__ import annotations
 import struct
 from typing import List
 
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import *
+from snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.trace.v1.trace_marshaler import *
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,

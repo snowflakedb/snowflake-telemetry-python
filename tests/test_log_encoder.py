@@ -16,7 +16,7 @@ import unittest
 from typing import Sequence, Tuple
 
 from opentelemetry._logs import SeverityNumber
-from opentelemetry.exporter.otlp.proto.common._internal import (
+from snowflake.telemetry.test.exporter_otlp_proto_common_helper import (
     _encode_attributes,
     _encode_span_id,
     _encode_trace_id,
@@ -69,7 +69,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
 
     def test_dropped_attributes_count(self):
         sdk_logs = self._get_test_logs_dropped_attributes()
-        encoded_logs = bytes(encode_logs(sdk_logs))
+        encoded_logs = encode_logs(sdk_logs).SerializeToString()
         decoded_logs = PB2LogsData()
         decoded_logs.ParseFromString(encoded_logs)
         self.assertTrue(hasattr(sdk_logs[0].log_record, "dropped_attributes"))

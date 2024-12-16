@@ -20,6 +20,7 @@ PROTO_REPO_DIR=${PROTO_REPO_DIR:-"/tmp/opentelemetry-proto"}
 # root of opentelemetry-python repo
 repo_root="$(git rev-parse --show-toplevel)"
 venv_dir="/tmp/proto_codegen_venv"
+code_dir="proto_impl/py"
 
 # run on exit even if crash
 cleanup() {
@@ -55,8 +56,13 @@ fi
 cd $repo_root/src/snowflake/telemetry/_internal
 
 # clean up old generated code
+# remove all the proxy files
 mkdir -p opentelemetry/proto
-find opentelemetry/proto/ -regex ".*_marshaler\.py" -exec rm {} +
+find opentelemetry/proto/ -regex ".*_proxy\.py" -exec rm {} +
+
+# remove all the py implementation marshaler files
+mkdir -p $code_dir/opentelemetry/proto
+find $code_dir/opentelemetry/proto/ -regex ".*_marshaler\.py" -exec rm {} +
 
 # generate proto code for all protos
 all_protos=$(find $PROTO_REPO_DIR/ -iname "*.proto")

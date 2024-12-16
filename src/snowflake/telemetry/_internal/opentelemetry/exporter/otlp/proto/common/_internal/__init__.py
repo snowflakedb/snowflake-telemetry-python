@@ -34,18 +34,18 @@ from typing import (
 )
 
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_proxy import (
     InstrumentationScope as PB2InstrumentationScope,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_proxy import (
     Resource as PB2Resource,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import AnyValue as PB2AnyValue
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import KeyValue as PB2KeyValue
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_proxy import AnyValue as PB2AnyValue
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_proxy import KeyValue as PB2KeyValue
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_proxy import (
     KeyValueList as PB2KeyValueList,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_proxy import (
     ArrayValue as PB2ArrayValue,
 )
 from opentelemetry.sdk.trace import Resource

@@ -79,7 +79,7 @@ message InstrumentationScope {
 
             generated_code_file_dir = tempfile.gettempdir()
             generated_code_file_name = proto_file_name.replace(".proto", "_marshaler.py")
-            generated_code_file = os.path.join(generated_code_file_dir, generated_code_file_name)
+            generated_code_file = os.path.join(generated_code_file_dir, "proto_impl", "py", generated_code_file_name)
 
             # Ensure generated code file exists
             self.assertTrue(os.path.exists(generated_code_file))

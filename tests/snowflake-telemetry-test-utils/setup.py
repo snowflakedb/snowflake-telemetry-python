@@ -6,6 +6,18 @@ from setuptools import (
 DESCRIPTION = 'Snowflake Telemetry Test Utils'
 LONG_DESCRIPTION = 'This package provides test utils for testing snowflake-telemetry-python'
 
+benchmark_requires = [
+    "google-benchmark"
+]
+code_gen_requires = [
+    "Jinja2 == 3.1.4",
+    "grpcio-tools >= 1.62.3", 
+    "black >= 24.1.0", 
+    "isort >= 5.12.0",
+]
+tox_requires = [
+    "tox >= 4.0.0"
+]
 
 setup(
     name="snowflake-telemetry-test-utils",
@@ -15,16 +27,17 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "opentelemetry-exporter-otlp-proto-common == 1.26.0",
+        "opentelemetry-proto",
         "pytest >= 7.0.0",
         "snowflake-telemetry-python == 0.6.0.dev",
-        "Jinja2 == 3.1.4",
-        "grpcio-tools >= 1.62.3", 
-        "black >= 24.1.0", 
-        "isort >= 5.12.0",
         "hypothesis >= 6.0.0",
-        "google-benchmark",
     ],
+    extras_require={
+        "benchmark": benchmark_requires,
+        "code-gen": code_gen_requires,
+        "tox": tox_requires,
+        "all": benchmark_requires + code_gen_requires + tox_requires,
+    },
     packages=find_namespace_packages(
         where='src'
     ),

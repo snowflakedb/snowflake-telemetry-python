@@ -17,11 +17,11 @@ import opentelemetry.proto.common.v1.common_pb2 as common_pb2
 import opentelemetry.proto.metrics.v1.metrics_pb2 as metrics_pb2
 import opentelemetry.proto.resource.v1.resource_pb2 as resource_pb2
 
-import snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler as logs_sf
-import snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler as trace_sf
-import snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler as common_sf
-import snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_marshaler as metrics_sf
-import snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler as resource_sf
+import snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.logs.v1.logs_marshaler as logs_sf
+import snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.trace.v1.trace_marshaler as trace_sf
+import snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.common.v1.common_marshaler as common_sf
+import snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.metrics.v1.metrics_marshaler as metrics_sf
+import snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.resource.v1.resource_marshaler as resource_sf
 
 # Strategy for generating protobuf types
 def nullable(type): return st.one_of(st.none(), type)

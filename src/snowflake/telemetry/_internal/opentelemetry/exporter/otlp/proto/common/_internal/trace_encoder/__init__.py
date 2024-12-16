@@ -29,16 +29,16 @@ from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._int
     _encode_span_id,
     _encode_trace_id,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.collector.trace.v1.trace_service_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.collector.trace.v1.trace_service_proxy import (
     ExportTraceServiceRequest as PB2ExportTraceServiceRequest,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import (
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_proxy import (
     ResourceSpans as PB2ResourceSpans,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import ScopeSpans as PB2ScopeSpans
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import Span as PB2SPan
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import SpanFlags as PB2SpanFlags
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import Status as PB2Status
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_proxy import ScopeSpans as PB2ScopeSpans
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_proxy import Span as PB2SPan
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_proxy import SpanFlags as PB2SpanFlags
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_proxy import Status as PB2Status
 from opentelemetry.sdk.trace import Event, ReadableSpan
 from opentelemetry.trace import Link, SpanKind
 from opentelemetry.trace.span import SpanContext, Status, TraceState

@@ -28,8 +28,8 @@ from __future__ import annotations
 import struct
 from typing import List
 
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import *
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import *
+from snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.common.v1.common_marshaler import *
+from snowflake.telemetry._internal.proto_impl.py.opentelemetry.proto.resource.v1.resource_marshaler import *
 from snowflake.telemetry._internal.serialize import (
     Enum,
     MessageMarshaler,
