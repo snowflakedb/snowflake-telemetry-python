@@ -67,7 +67,6 @@ all_protos=$(find $PROTO_REPO_DIR/ -iname "*.proto")
 python -m grpc_tools.protoc \
     -I $PROTO_REPO_DIR \
     --python_out=./proto_impl/v$PB_VERSION_MAJOR \
-    --mypy_out=./proto_impl/v$PB_VERSION_MAJOR \
     $all_protos
 
 # since we do not have the generated files in the base directory
