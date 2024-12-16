@@ -57,4 +57,4 @@ find opentelemetry/exporter -type f -name "*.py" -exec $SED_CMD 's/opentelemetry
 # https://www.apache.org/licenses/LICENSE-2.0
 find opentelemetry/exporter -type f -name "*.py" -exec $SED_CMD '14s|^|#\n# This file has been modified from the original source code at\n#\n#     https://github.com/open-telemetry/opentelemetry-python/tree/'"$REPO_BRANCH_OR_COMMIT"'\n#\n# by Snowflake Inc.\n|' {} +
 
-find proto_impl/v3 -type f -name "*.py''" -exec rm {} +
+find opentelemetry/exporter -type f -name "*.py''" -exec rm {} +

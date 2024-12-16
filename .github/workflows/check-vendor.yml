@@ -19,7 +19,7 @@ on:
       - ".github/workflows/check-vendor.yml"
 
 jobs:
-  check-codegen:
+  check-vendor:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3

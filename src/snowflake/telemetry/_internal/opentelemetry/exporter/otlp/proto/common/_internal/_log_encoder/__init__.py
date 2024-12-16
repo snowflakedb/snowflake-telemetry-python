@@ -36,6 +36,7 @@ from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_proxy import
     ResourceLogs,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_proxy import LogRecord as PB2LogRecord
+
 from opentelemetry.sdk._logs import LogData
 
 
