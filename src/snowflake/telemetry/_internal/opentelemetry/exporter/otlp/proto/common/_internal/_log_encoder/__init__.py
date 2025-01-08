@@ -14,29 +14,28 @@
 #
 # This file has been modified from the original source code at
 #
-#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.26.0
+#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.29.0
 #
 # by Snowflake Inc.
 from collections import defaultdict
-from typing import Sequence, List
+from typing import List, Sequence
 
 from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal import (
+    _encode_attributes,
     _encode_instrumentation_scope,
     _encode_resource,
     _encode_span_id,
     _encode_trace_id,
     _encode_value,
-    _encode_attributes,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.collector.logs.v1.logs_service_marshaler import (
     ExportLogsServiceRequest,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import (
-    ScopeLogs,
-    ResourceLogs,
-)
 from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import LogRecord as PB2LogRecord
-
+from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import (
+    ResourceLogs,
+    ScopeLogs,
+)
 from opentelemetry.sdk._logs import LogData
 
 
@@ -55,13 +54,14 @@ def _encode_log(log_data: LogData) -> PB2LogRecord:
         if log_data.log_record.trace_id == 0
         else _encode_trace_id(log_data.log_record.trace_id)
     )
+    body = log_data.log_record.body
     return PB2LogRecord(
         time_unix_nano=log_data.log_record.timestamp,
         observed_time_unix_nano=log_data.log_record.observed_timestamp,
         span_id=span_id,
         trace_id=trace_id,
         flags=int(log_data.log_record.trace_flags),
-        body=_encode_value(log_data.log_record.body),
+        body=_encode_value(body) if body is not None else None,
         severity_text=log_data.log_record.severity_text,
         attributes=_encode_attributes(log_data.log_record.attributes),
         dropped_attributes_count=log_data.log_record.dropped_attributes,

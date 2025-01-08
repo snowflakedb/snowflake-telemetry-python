@@ -9,7 +9,7 @@
 # fixes needed in the OTLP exporter.
 
 # Pinned commit/branch/tag for the current version used in opentelemetry-proto python package.
-REPO_BRANCH_OR_COMMIT="v1.26.0"
+REPO_BRANCH_OR_COMMIT="v1.29.0"
 
 set -e
 
@@ -40,7 +40,7 @@ cp -r $REPO_DIR/exporter/opentelemetry-exporter-otlp-proto-common/src/openteleme
 # If MacOS need '' after -i
 # Detect the OS (macOS or Linux)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  SED_CMD="sed -i ''"
+  SED_CMD="sed -i .bak"
 else
   SED_CMD="sed -i"
 fi

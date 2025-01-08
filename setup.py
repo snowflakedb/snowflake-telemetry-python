@@ -27,8 +27,8 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     install_requires=[
-        "opentelemetry-api == 1.26.0",
-        "opentelemetry-sdk == 1.26.0",
+        "opentelemetry-api == 1.29.0",
+        "opentelemetry-sdk == 1.29.0",
     ],
     packages=find_namespace_packages(
         where='src'

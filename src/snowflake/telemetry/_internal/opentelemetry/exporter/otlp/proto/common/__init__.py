@@ -14,7 +14,7 @@
 #
 # This file has been modified from the original source code at
 #
-#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.26.0
+#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.29.0
 #
 # by Snowflake Inc.
 

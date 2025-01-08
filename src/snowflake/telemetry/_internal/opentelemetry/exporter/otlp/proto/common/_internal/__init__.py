@@ -14,7 +14,7 @@
 #
 # This file has been modified from the original source code at
 #
-#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.26.0
+#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.29.0
 #
 # by Snowflake Inc.
 
@@ -24,31 +24,31 @@ from collections.abc import Sequence
 from itertools import count
 from typing import (
     Any,
-    Mapping,
-    Optional,
-    List,
     Callable,
-    TypeVar,
     Dict,
     Iterator,
+    List,
+    Mapping,
+    Optional,
+    TypeVar,
 )
 
-from opentelemetry.sdk.util.instrumentation import InstrumentationScope
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import AnyValue as PB2AnyValue
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
+    ArrayValue as PB2ArrayValue,
+)
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
     InstrumentationScope as PB2InstrumentationScope,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
-    Resource as PB2Resource,
-)
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import AnyValue as PB2AnyValue
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import KeyValue as PB2KeyValue
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
     KeyValueList as PB2KeyValueList,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
-    ArrayValue as PB2ArrayValue,
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
+    Resource as PB2Resource,
 )
 from opentelemetry.sdk.trace import Resource
+from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.util.types import Attributes
 
 _logger = logging.getLogger(__name__)
@@ -81,6 +81,8 @@ def _encode_value(value: Any) -> PB2AnyValue:
         return PB2AnyValue(int_value=value)
     if isinstance(value, float):
         return PB2AnyValue(double_value=value)
+    if isinstance(value, bytes):
+        return PB2AnyValue(bytes_value=value)
     if isinstance(value, Sequence):
         return PB2AnyValue(
             array_value=PB2ArrayValue(values=[_encode_value(v) for v in value])
