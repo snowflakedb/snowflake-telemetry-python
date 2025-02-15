@@ -17,7 +17,7 @@ setup(
     install_requires=[
         "opentelemetry-exporter-otlp-proto-common == 1.26.0",
         "pytest >= 7.0.0",
-        "snowflake-telemetry-python == 0.6.0.dev",
+        "snowflake-telemetry-python == 0.6.0",
         "Jinja2 == 3.1.4",
         "grpcio-tools >= 1.62.3", 
         "black >= 24.1.0", 

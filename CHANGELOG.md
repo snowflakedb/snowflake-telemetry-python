@@ -1,6 +1,6 @@
 # Release History
 
-## Unreleased
+## 0.6.0 (2024-02-14)
 
 * Upgrade OpenTelemetry Python dependencies to version 1.26.0
 * Vendored in adapter code from package opentelemetry-exporter-otlp-proto-common and replaced protobuf dependency with custom vanilla python serialization
