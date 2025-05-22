@@ -41,3 +41,8 @@ pip install . ./tests/snowflake-telemetry-test-utils
 To regenerate the code under `src/snowflake/_internal/opentelemetry/proto/`, execute the script `./scripts/proto_codegen.sh`. The script expects the `src/snowflake/_internal/opentelemetry/proto/` directory to exist, and will delete all .py files in it before regerating the code.
 
 The commit/branch/tag of [opentelemetry-proto](https://github.com/open-telemetry/opentelemetry-proto) that the code is generated from is pinned to PROTO_REPO_BRANCH_OR_COMMIT, which can be configured in the script. It is currently pinned to the same tag as [opentelemetry-python](https://github.com/open-telemetry/opentelemetry-python/blob/main/scripts/proto_codegen.sh#L15).
+
+
+### Release
+
+Release to pypi is done via [Upload Python Package](https://github.com/snowflakedb/snowflake-telemetry-python/actions/workflows/python-publish.yml) workflow and it is triggered whenever a new [release](https://github.com/snowflakedb/snowflake-telemetry-python/releases) is created. Before creating a release, the PR to update versions ([example](https://github.com/snowflakedb/snowflake-telemetry-python/pull/54)) should be merged to main branch first.
