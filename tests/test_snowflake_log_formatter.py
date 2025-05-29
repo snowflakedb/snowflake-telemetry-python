@@ -52,3 +52,13 @@ class TestSnowflakeLogFormatter(unittest.TestCase):
         self.assertIn("line 37, in test_exception_log\n", actual_stacktrace)
         self.assertIn("ZeroDivisionError: division by zero\n", actual_stacktrace)
         self.assertEqual(expected_log_message, actual_log_message)
+
+    def test_get_severity_text(self):
+        """ Does get_severity_text work correctly? """
+        self.assertEqual("INFO", SnowflakeLogFormatter.get_severity_text("info"))
+        self.assertEqual("FATAL", SnowflakeLogFormatter.get_severity_text("critical"))
+        self.assertEqual("WARN", SnowflakeLogFormatter.get_severity_text("warning"))
+        self.assertEqual("DEBUG", SnowflakeLogFormatter.get_severity_text("debug"))
+        self.assertEqual("ERROR", SnowflakeLogFormatter.get_severity_text("error"))
+        self.assertEqual("TRACE", SnowflakeLogFormatter.get_severity_text("notset"))
+        self.assertEqual("TRACE", SnowflakeLogFormatter.get_severity_text("random"))

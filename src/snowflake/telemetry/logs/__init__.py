@@ -36,6 +36,16 @@ _RESERVED_ATTRS = frozenset(
     )
 )
 
+_PY_LOG_LEVELS = frozenset(
+    (
+        "CRITICAL",
+        "ERROR",
+        "WARNING",
+        "INFO",
+        "DEBUG"
+    )
+)
+
 
 class SnowflakeLogFormatter(logging.Formatter):
     """
@@ -48,12 +58,12 @@ class SnowflakeLogFormatter(logging.Formatter):
         Maps from Python logging level to OpenTelemetry's Severity Text.
         """
         level = py_level_name.upper()
+        if level not in _PY_LOG_LEVELS:
+            return "TRACE"
         if level == "WARNING":
             return "WARN"
         if level == "CRITICAL":
             return "FATAL"
-        if level == "NOTSET":
-            return "TRACE"
         return level
 
     def format(self, record: logging.LogRecord) -> str:
