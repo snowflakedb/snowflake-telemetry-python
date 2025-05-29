@@ -25,6 +25,7 @@ from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._log
     encode_logs,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import LogsData
+from snowflake.telemetry.logs import SnowflakeLogFormatter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk._logs import export
 from opentelemetry.sdk import _logs
@@ -97,20 +98,6 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
         super().__init__(logger_provider=provider)
 
     @staticmethod
-    def _get_snowflake_log_level_name(py_level_name):
-        """
-        Adapted from the getSnowflakeLogLevelName method in XP's logger.py
-        """
-        level = py_level_name.upper()
-        if level == "WARNING":
-            return "WARN"
-        if level == "CRITICAL":
-            return "FATAL"
-        if level == "NOTSET":
-            return "TRACE"
-        return level
-
-    @staticmethod
     def _get_attributes(record: logging.LogRecord) -> types.Attributes:
         attributes = _logs.LoggingHandler._get_attributes(record) # pylint: disable=protected-access
 
@@ -124,9 +111,7 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
 
     def _translate(self, record: logging.LogRecord) -> _logs.LogRecord:
         otel_record = super()._translate(record)
-        otel_record.severity_text = SnowflakeLoggingHandler._get_snowflake_log_level_name(
-            record.levelname
-        )
+        otel_record.severity_text = SnowflakeLogFormatter.get_severity_text(record.levelname)
         return otel_record
 
 
