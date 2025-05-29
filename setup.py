@@ -1,4 +1,5 @@
 import os
+
 from setuptools import (
     find_namespace_packages,
     setup,
@@ -16,7 +17,6 @@ SNOWFLAKE_TELEMETRY_SRC_DIR = os.path.join("src", "snowflake", "telemetry")
 VERSION = None
 with open(os.path.join(SNOWFLAKE_TELEMETRY_SRC_DIR, "version.py"), encoding="utf-8") as f:
     exec(f.read())
-
 
 setup(
     name="snowflake-telemetry-python",

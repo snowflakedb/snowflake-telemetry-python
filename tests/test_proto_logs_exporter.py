@@ -11,16 +11,17 @@ from opentelemetry.proto.logs.v1.logs_pb2 import (
     SEVERITY_NUMBER_ERROR,
     SEVERITY_NUMBER_FATAL,
 )
+from snowflake.telemetry.test.logs_test_utils import InMemoryLogWriter
+
 from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
     SnowflakeLoggingHandler,
 )
-from snowflake.telemetry.test.logs_test_utils import InMemoryLogWriter
 
 
 class TestSnowflakeLoggingHandler(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        self.log_writer = InMemoryLogWriter() # Replaced with SnowflakeLogWriter in XP
+        self.log_writer = InMemoryLogWriter()  # Replaced with SnowflakeLogWriter in XP
         self.root_logger = logging.getLogger()
         self.root_logger.addHandler(SnowflakeLoggingHandler(self.log_writer))
         self.this_file_name = inspect.currentframe().f_code.co_filename
@@ -151,7 +152,6 @@ class TestSnowflakeLoggingHandler(unittest.TestCase):
             self._get_attribute_int_value(log_record.attributes, 'code.lineno'),
             0
         )
-
 
     def _get_attribute_string_value(self, attributes, key: str) -> str:
         for attribute in attributes:

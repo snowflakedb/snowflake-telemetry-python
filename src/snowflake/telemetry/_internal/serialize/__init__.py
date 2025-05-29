@@ -11,6 +11,7 @@ from typing import List, Union, Dict, Any
 # Alias Enum to IntEnum
 Enum = IntEnum
 
+
 # Static class to handle varint encoding
 # There is code duplication for performance reasons
 # https://developers.google.com/protocol-buffers/docs/encoding#varints
@@ -89,6 +90,7 @@ class Varint:
 
     write_varint_s64 = write_varint_s32
 
+
 # Base class for all custom messages
 class MessageMarshaler:
     # There is a high overhead for creating an empty dict
@@ -101,7 +103,7 @@ class MessageMarshaler:
 
     def write_to(self, out: bytearray) -> None:
         ...
-    
+
     def calculate_size(self) -> int:
         ...
 
@@ -109,17 +111,17 @@ class MessageMarshaler:
         if not hasattr(self, "_size"):
             self._size = self.calculate_size()
         return self._size
-    
+
     def SerializeToString(self) -> bytes:
         # size MUST be calculated before serializing since some preprocessing is done
-        self._get_size() 
+        self._get_size()
         stream = bytearray()
         self.write_to(stream)
         return bytes(stream)
-    
+
     def __bytes__(self) -> bytes:
         return self.SerializeToString()
-    
+
     # The following size and serialize functions may be inlined by the code generator
     # The following strings are replaced by the code generator for inlining:
     #   - TAG
@@ -143,7 +145,7 @@ class MessageMarshaler:
     def size_sint32(self, TAG: bytes, FIELD_ATTR: int) -> int:
         return len(TAG) + Varint.size_varint_s32(FIELD_ATTR)
 
-    def size_sint64(self, TAG: bytes, FIELD_ATTR: int) -> int: 
+    def size_sint64(self, TAG: bytes, FIELD_ATTR: int) -> int:
         return len(TAG) + Varint.size_varint_s64(FIELD_ATTR)
 
     def size_int32(self, TAG: bytes, FIELD_ATTR: int) -> int:
@@ -177,16 +179,17 @@ class MessageMarshaler:
         v = FIELD_ATTR.encode("utf-8")
         return len(TAG) + Varint.size_varint_u32(len(v)) + len(v)
 
-    def size_message(self, TAG: bytes, FIELD_ATTR: MessageMarshaler) -> int: 
+    def size_message(self, TAG: bytes, FIELD_ATTR: MessageMarshaler) -> int:
         return len(TAG) + Varint.size_varint_u32(FIELD_ATTR._get_size()) + FIELD_ATTR._get_size()
 
     def size_repeated_message(self, TAG: bytes, FIELD_ATTR: List[MessageMarshaler]) -> int:
-        return sum(message._get_size() + len(TAG) + Varint.size_varint_u32(message._get_size()) for message in FIELD_ATTR)
+        return sum(
+            message._get_size() + len(TAG) + Varint.size_varint_u32(message._get_size()) for message in FIELD_ATTR)
 
-    def size_repeated_double(self, TAG: bytes, FIELD_ATTR: List[float]): 
+    def size_repeated_double(self, TAG: bytes, FIELD_ATTR: List[float]):
         return len(TAG) + len(FIELD_ATTR) * 8 + Varint.size_varint_u32(len(FIELD_ATTR) * 8)
 
-    def size_repeated_fixed64(self, TAG: bytes, FIELD_ATTR: List[int]): 
+    def size_repeated_fixed64(self, TAG: bytes, FIELD_ATTR: List[int]):
         return len(TAG) + len(FIELD_ATTR) * 8 + Varint.size_varint_u32(len(FIELD_ATTR) * 8)
 
     def size_repeated_uint64(self, TAG: bytes, FIELD_ATTR: List[int]):

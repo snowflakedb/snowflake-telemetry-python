@@ -25,7 +25,6 @@ from opentelemetry.exporter.otlp.proto.common._internal.trace_encoder import (
     _SPAN_KIND_MAP,
     _encode_status,
 )
-from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.trace_encoder import encode_spans
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
     ExportTraceServiceRequest as PB2ExportTraceServiceRequest,
 )
@@ -57,12 +56,15 @@ from opentelemetry.trace import SpanKind as SDKSpanKind
 from opentelemetry.trace import TraceFlags as SDKTraceFlags
 from opentelemetry.trace.status import Status as SDKStatus
 from opentelemetry.trace.status import StatusCode as SDKStatusCode
-from snowflake.telemetry._internal.exporter.otlp.proto.traces import (
-    ProtoSpanExporter,
-)
 from snowflake.telemetry.test.traces_test_utils import (
     InMemorySpanWriter,
 )
+
+from snowflake.telemetry._internal.exporter.otlp.proto.traces import (
+    ProtoSpanExporter,
+)
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.trace_encoder import encode_spans
+
 
 class TestOTLPTraceEncoder(unittest.TestCase):
     def test_encode_spans(self):
@@ -83,18 +85,18 @@ class TestOTLPTraceEncoder(unittest.TestCase):
     def get_exhaustive_otel_span_list() -> List[SDKSpan]:
         trace_id = 0x3E0C63257DE34C926F9EFCD03927272E
 
-        base_time = 683647322 * 10**9  # in ns
+        base_time = 683647322 * 10 ** 9  # in ns
         start_times = (
             base_time,
-            base_time + 150 * 10**6,
-            base_time + 300 * 10**6,
-            base_time + 400 * 10**6,
+            base_time + 150 * 10 ** 6,
+            base_time + 300 * 10 ** 6,
+            base_time + 400 * 10 ** 6,
         )
         end_times = (
-            start_times[0] + (50 * 10**6),
-            start_times[1] + (100 * 10**6),
-            start_times[2] + (200 * 10**6),
-            start_times[3] + (300 * 10**6),
+            start_times[0] + (50 * 10 ** 6),
+            start_times[1] + (100 * 10 ** 6),
+            start_times[2] + (200 * 10 ** 6),
+            start_times[3] + (300 * 10 ** 6),
         )
 
         parent_span_context = SDKSpanContext(
@@ -117,7 +119,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
             events=(
                 SDKEvent(
                     name="event0",
-                    timestamp=base_time + 50 * 10**6,
+                    timestamp=base_time + 50 * 10 ** 6,
                     attributes={
                         "annotation_bool": True,
                         "annotation_string": "annotation_test",
@@ -171,7 +173,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
         return [span1, span2, span3, span4]
 
     def get_exhaustive_test_spans(
-        self,
+            self,
     ) -> Tuple[List[SDKSpan], PB2ExportTraceServiceRequest]:
         otel_spans = self.get_exhaustive_otel_span_list()
         trace_id = _encode_trace_id(otel_spans[0].context.trace_id)
@@ -194,7 +196,7 @@ class TestOTLPTraceEncoder(unittest.TestCase):
                                     parent_span_id=_encode_span_id(
                                         otel_spans[0].parent.span_id
                                     ),
-                                    flags=PB2SpanFlags.SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK|PB2SpanFlags.SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK,
+                                    flags=PB2SpanFlags.SPAN_FLAGS_CONTEXT_HAS_IS_REMOTE_MASK | PB2SpanFlags.SPAN_FLAGS_CONTEXT_IS_REMOTE_MASK,
                                     name=otel_spans[0].name,
                                     kind=span_kind,
                                     start_time_unix_nano=otel_spans[

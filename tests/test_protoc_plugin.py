@@ -1,13 +1,13 @@
 """
 Test protoc code generator plugin for custom protoc message types
 """
-import unittest
-import tempfile
-import subprocess
 import os
+import subprocess
+import tempfile
+import unittest
+
 
 # Import into globals() so generated code string can be compiled
-from snowflake.telemetry._internal.serialize import *
 
 class TestProtocPlugin(unittest.TestCase):
     def namespace_serialize_message(self, message_type: str, local_namespace: dict, **kwargs) -> bytes:
@@ -90,4 +90,5 @@ message InstrumentationScope {
                 local_namespace = {}
                 eval(compile(generated_code, generated_code_file, "exec"), globals(), local_namespace)
 
-                self.assertEqual(b'\n\x04test', self.namespace_serialize_message("AnyValue", local_namespace, string_value="test"))
+                self.assertEqual(b'\n\x04test',
+                                 self.namespace_serialize_message("AnyValue", local_namespace, string_value="test"))

@@ -17,16 +17,17 @@ import abc
 from typing import Dict
 
 import opentelemetry
-from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.metrics_encoder import (
-    encode_metrics,
-)
-from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_marshaler import MetricsData as PB2MetricsData
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
     MetricExportResult,
     MetricExporter,
     MetricsData,
 )
+
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.metrics_encoder import (
+    encode_metrics,
+)
+from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1.metrics_marshaler import MetricsData as PB2MetricsData
 
 
 # pylint: disable=too-few-public-methods
@@ -35,6 +36,7 @@ class MetricWriter(abc.ABC):
     MetricWriter abstract base class with one abstract method that must be
     implemented by the user.
     """
+
     @abc.abstractmethod
     def write_metrics(self, serialized_metrics: bytes) -> None:
         """
@@ -53,6 +55,7 @@ class ProtoMetricExporter(MetricExporter):
     according to the implementation you provide to the MetricWriter abstract
     base class above.
     """
+
     def __init__(
             self,
             metric_writer: MetricWriter,
@@ -83,7 +86,7 @@ class ProtoMetricExporter(MetricExporter):
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
         return PB2MetricsData(
-            resource_metrics=encode_metrics(data).resource_metrics # pylint: disable=no-member
+            resource_metrics=encode_metrics(data).resource_metrics  # pylint: disable=no-member
         ).SerializeToString()
 
     def force_flush(self, timeout_millis: float = 10_000) -> bool:

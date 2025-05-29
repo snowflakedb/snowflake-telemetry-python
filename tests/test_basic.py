@@ -3,8 +3,6 @@ Tests for Snowflake Telemetry Python.
 """
 import unittest
 
-from snowflake import telemetry
-from opentelemetry.trace import get_current_span
 from opentelemetry.sdk.trace import (
     TracerProvider,
 )
@@ -14,8 +12,10 @@ from opentelemetry.sdk.trace.export import (
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
-
+from opentelemetry.trace import get_current_span
 from opentelemetry.trace.span import INVALID_SPAN
+
+from snowflake import telemetry
 
 
 class TestBasic(unittest.TestCase):

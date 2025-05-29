@@ -2,11 +2,12 @@
 # Copyright (c) 2012-2024 Snowflake Computing Inc. All rights reserved.
 #
 
-import time
 import random
+import time
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import RandomIdGenerator
+
 
 # Generator that returns
 #   trace_id: the given (inherited) trace id on the first call to generate_trace_id, and a Snowflake trace_id on subsequent calls

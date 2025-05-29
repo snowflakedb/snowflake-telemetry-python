@@ -14,21 +14,21 @@ Please see the class documentation for those classes to learn more.
 """
 
 import abc
-import logging
 import logging.config
 import threading
 import typing
-import opentelemetry.sdk.util.instrumentation as otel_instrumentation
+
 import opentelemetry.sdk._logs._internal as _logs_internal
+import opentelemetry.sdk.util.instrumentation as otel_instrumentation
+from opentelemetry.sdk import _logs
+from opentelemetry.sdk._logs import export
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.util import types
 
 from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._log_encoder import (
     encode_logs,
 )
 from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import LogsData
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk._logs import export
-from opentelemetry.sdk import _logs
-from opentelemetry.util import types
 
 
 # pylint: disable=too-few-public-methods
@@ -37,6 +37,7 @@ class LogWriter(abc.ABC):
     LogWriter abstract base class with one abstract method that must be
     implemented by the user.
     """
+
     @abc.abstractmethod
     def write_logs(self, serialized_logs: bytes) -> None:
         """
@@ -70,7 +71,7 @@ class _ProtoLogExporter(export.LogExporter):
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
         return LogsData(
-            resource_logs=encode_logs(batch).resource_logs # pylint: disable=no-member
+            resource_logs=encode_logs(batch).resource_logs  # pylint: disable=no-member
         ).SerializeToString()
 
     def shutdown(self):
@@ -88,7 +89,7 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
     def __init__(
             self,
             log_writer: LogWriter,
-        ):
+    ):
         exporter = _ProtoLogExporter(log_writer)
         provider = _SnowflakeTelemetryLoggerProvider()
         provider.add_log_record_processor(
@@ -112,7 +113,7 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
 
     @staticmethod
     def _get_attributes(record: logging.LogRecord) -> types.Attributes:
-        attributes = _logs.LoggingHandler._get_attributes(record) # pylint: disable=protected-access
+        attributes = _logs.LoggingHandler._get_attributes(record)  # pylint: disable=protected-access
 
         # Temporarily storing logger's name in record's attributes.
         # This attribute will be removed by the logger.
@@ -137,13 +138,13 @@ class _SnowflakeTelemetryLogger(_logs.Logger):
     """
 
     def __init__(
-        self,
-        resource: Resource,
-        multi_log_record_processor: typing.Union[
-            _logs_internal.SynchronousMultiLogRecordProcessor,
-            _logs_internal.ConcurrentMultiLogRecordProcessor,
-        ],
-        instrumentation_scope: otel_instrumentation.InstrumentationScope,
+            self,
+            resource: Resource,
+            multi_log_record_processor: typing.Union[
+                _logs_internal.SynchronousMultiLogRecordProcessor,
+                _logs_internal.ConcurrentMultiLogRecordProcessor,
+            ],
+            instrumentation_scope: otel_instrumentation.InstrumentationScope,
     ):
         super().__init__(resource, multi_log_record_processor, instrumentation_scope)
         self._lock = threading.Lock()

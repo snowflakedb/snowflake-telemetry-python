@@ -20,6 +20,8 @@
 from collections import defaultdict
 from typing import Sequence, List
 
+from opentelemetry.sdk._logs import LogData
+
 from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_instrumentation_scope,
     _encode_resource,
@@ -31,13 +33,11 @@ from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._int
 from snowflake.telemetry._internal.opentelemetry.proto.collector.logs.v1.logs_service_marshaler import (
     ExportLogsServiceRequest,
 )
+from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import LogRecord as PB2LogRecord
 from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import (
     ScopeLogs,
     ResourceLogs,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.logs.v1.logs_marshaler import LogRecord as PB2LogRecord
-
-from opentelemetry.sdk._logs import LogData
 
 
 def encode_logs(batch: Sequence[LogData]) -> ExportLogsServiceRequest:

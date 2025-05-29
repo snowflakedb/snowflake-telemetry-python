@@ -6,7 +6,6 @@ from setuptools import (
 DESCRIPTION = 'Snowflake Telemetry Test Utils'
 LONG_DESCRIPTION = 'This package provides test utils for testing snowflake-telemetry-python'
 
-
 setup(
     name="snowflake-telemetry-test-utils",
     version="0.0.1.dev",
@@ -19,8 +18,8 @@ setup(
         "pytest >= 7.0.0",
         "snowflake-telemetry-python == 0.6.1",
         "Jinja2 == 3.1.4",
-        "grpcio-tools >= 1.62.3", 
-        "black >= 24.1.0", 
+        "grpcio-tools >= 1.62.3",
+        "black >= 24.1.0",
         "isort >= 5.12.0",
         "hypothesis >= 6.0.0",
         "google-benchmark",
@@ -53,6 +52,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Application Frameworks",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering :: Information Analysis",
-     ],
+    ],
     zip_safe=True,
 )

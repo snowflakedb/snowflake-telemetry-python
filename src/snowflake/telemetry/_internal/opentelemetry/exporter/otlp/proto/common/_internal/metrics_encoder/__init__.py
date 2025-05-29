@@ -18,12 +18,15 @@
 #
 # by Snowflake Inc.
 import logging
-
-from opentelemetry.sdk.metrics.export import (
-    MetricExporter,
-)
-from opentelemetry.sdk.metrics.view import Aggregation
 from os import environ
+from typing import Dict
+
+from opentelemetry.sdk.environment_variables import (
+    OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION,
+)
+from opentelemetry.sdk.environment_variables import (
+    OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE,
+)
 from opentelemetry.sdk.metrics import (
     Counter,
     Histogram,
@@ -32,20 +35,12 @@ from opentelemetry.sdk.metrics import (
     ObservableUpDownCounter,
     UpDownCounter,
 )
-from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal import (
-    _encode_attributes,
-)
-from opentelemetry.sdk.environment_variables import (
-    OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE,
-)
 from opentelemetry.sdk.metrics.export import (
     AggregationTemporality,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.collector.metrics.v1.metrics_service_marshaler import (
-    ExportMetricsServiceRequest,
+from opentelemetry.sdk.metrics.export import (
+    MetricExporter,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import InstrumentationScope
-from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1 import metrics_marshaler as pb2
 from opentelemetry.sdk.metrics.export import (
     MetricsData,
     Gauge,
@@ -53,16 +48,22 @@ from opentelemetry.sdk.metrics.export import (
     Sum,
     ExponentialHistogram as ExponentialHistogramType,
 )
-from typing import Dict
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
-    Resource as PB2Resource,
-)
-from opentelemetry.sdk.environment_variables import (
-    OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION,
-)
+from opentelemetry.sdk.metrics.view import Aggregation
 from opentelemetry.sdk.metrics.view import (
     ExponentialBucketHistogramAggregation,
     ExplicitBucketHistogramAggregation,
+)
+
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal import (
+    _encode_attributes,
+)
+from snowflake.telemetry._internal.opentelemetry.proto.collector.metrics.v1.metrics_service_marshaler import (
+    ExportMetricsServiceRequest,
+)
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import InstrumentationScope
+from snowflake.telemetry._internal.opentelemetry.proto.metrics.v1 import metrics_marshaler as pb2
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
+    Resource as PB2Resource,
 )
 
 _logger = logging.getLogger(__name__)
@@ -70,9 +71,9 @@ _logger = logging.getLogger(__name__)
 
 class OTLPMetricExporterMixin:
     def _common_configuration(
-        self,
-        preferred_temporality: Dict[type, AggregationTemporality] = None,
-        preferred_aggregation: Dict[type, Aggregation] = None,
+            self,
+            preferred_temporality: Dict[type, AggregationTemporality] = None,
+            preferred_aggregation: Dict[type, Aggregation] = None,
     ) -> None:
 
         MetricExporter.__init__(
@@ -82,7 +83,7 @@ class OTLPMetricExporterMixin:
         )
 
     def _get_temporality(
-        self, preferred_temporality: Dict[type, AggregationTemporality]
+            self, preferred_temporality: Dict[type, AggregationTemporality]
     ) -> Dict[type, AggregationTemporality]:
 
         otel_exporter_otlp_metrics_temporality_preference = (
@@ -116,7 +117,7 @@ class OTLPMetricExporterMixin:
 
         else:
             if otel_exporter_otlp_metrics_temporality_preference != (
-                "CUMULATIVE"
+                    "CUMULATIVE"
             ):
                 _logger.warning(
                     "Unrecognized OTEL_EXPORTER_METRICS_TEMPORALITY_PREFERENCE"
@@ -138,8 +139,8 @@ class OTLPMetricExporterMixin:
         return instrument_class_temporality
 
     def _get_aggregation(
-        self,
-        preferred_aggregation: Dict[type, Aggregation],
+            self,
+            preferred_aggregation: Dict[type, Aggregation],
     ) -> Dict[type, Aggregation]:
 
         otel_exporter_otlp_metrics_default_histogram_aggregation = environ.get(
@@ -148,7 +149,7 @@ class OTLPMetricExporterMixin:
         )
 
         if otel_exporter_otlp_metrics_default_histogram_aggregation == (
-            "base2_exponential_bucket_histogram"
+                "base2_exponential_bucket_histogram"
         ):
 
             instrument_class_aggregation = {
@@ -158,9 +159,8 @@ class OTLPMetricExporterMixin:
         else:
 
             if otel_exporter_otlp_metrics_default_histogram_aggregation != (
-                "explicit_bucket_histogram"
+                    "explicit_bucket_histogram"
             ):
-
                 _logger.warning(
                     (
                         "Invalid value for %s: %s, using explicit bucket "
@@ -328,8 +328,8 @@ def encode_metrics(data: MetricsData) -> ExportMetricsServiceRequest:
 
     resource_data = []
     for (
-        sdk_resource,
-        scope_data,
+            sdk_resource,
+            scope_data,
     ) in resource_metrics_dict.items():
         resource_data.append(
             pb2.ResourceMetrics(

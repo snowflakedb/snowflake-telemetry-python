@@ -22,7 +22,6 @@ from opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_trace_id,
     _encode_value,
 )
-from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._log_encoder import encode_logs
 from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import (
     ExportLogsServiceRequest,
 )
@@ -44,12 +43,14 @@ from opentelemetry.sdk._logs import LogData, LogLimits, LogRecord as SDKLogRecor
 from opentelemetry.sdk.resources import Resource as SDKResource
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import TraceFlags
-from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
-    _ProtoLogExporter,
-)
 from snowflake.telemetry.test.logs_test_utils import (
     InMemoryLogWriter,
 )
+
+from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
+    _ProtoLogExporter,
+)
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._log_encoder import encode_logs
 
 
 class TestOTLPLogEncoder(unittest.TestCase):
@@ -163,7 +164,7 @@ class TestOTLPLogEncoder(unittest.TestCase):
         return [log1, log2, log3, log4]
 
     def get_test_logs(
-        self,
+            self,
     ) -> Tuple[Sequence[LogData], ExportLogsServiceRequest]:
         sdk_logs = self._get_sdk_log_data()
 

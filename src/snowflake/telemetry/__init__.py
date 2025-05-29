@@ -22,7 +22,7 @@ __version__ = VERSION
 def add_event(
         name: str,
         attributes: types.Attributes = None,
-    ) -> None:
+) -> None:
     """
     Add an event name and associated attributes to the current span.
     """
@@ -32,7 +32,7 @@ def add_event(
 def set_span_attribute(
         key: str,
         value: types.AttributeValue
-    ) -> None:
+) -> None:
     """
     Set an attribute key, value pair on the current span.
     """

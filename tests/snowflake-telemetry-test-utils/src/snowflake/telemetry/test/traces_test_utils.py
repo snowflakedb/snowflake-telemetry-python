@@ -7,6 +7,7 @@ import typing
 from opentelemetry.proto.trace.v1.trace_pb2 import (
     TracesData,
 )
+
 from snowflake.telemetry._internal.exporter.otlp.proto.traces import (
     SpanWriter,
 )

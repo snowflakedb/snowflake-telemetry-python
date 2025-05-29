@@ -16,15 +16,16 @@ Please see the class documentation for those classes to learn more.
 import abc
 import typing
 
-from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.trace_encoder import (
-    encode_spans,
-)
-from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import TracesData
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import (
     SpanExportResult,
     SpanExporter,
 )
+
+from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common.trace_encoder import (
+    encode_spans,
+)
+from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import TracesData
 
 
 # pylint: disable=too-few-public-methods
@@ -33,6 +34,7 @@ class SpanWriter(abc.ABC):
     SpanWriter abstract base class with one abstract method that must be
     implemented by the user.
     """
+
     @abc.abstractmethod
     def write_span(self, serialized_spans: bytes) -> None:
         """
@@ -51,12 +53,13 @@ class ProtoSpanExporter(SpanExporter):
     according to the implementation you provide to the SpanWriter abstract base
     class above.
     """
+
     def __init__(self, span_writer: SpanWriter):
         super().__init__()
         self.span_writer = span_writer
 
     def export(
-        self, spans: typing.Sequence[ReadableSpan]
+            self, spans: typing.Sequence[ReadableSpan]
     ) -> "SpanExportResult":
         try:
             self.span_writer.write_span(
@@ -68,12 +71,12 @@ class ProtoSpanExporter(SpanExporter):
 
     @staticmethod
     def _serialize_traces_data(
-        sdk_spans: typing.Sequence[ReadableSpan],
+            sdk_spans: typing.Sequence[ReadableSpan],
     ) -> bytes:
         # pylint gets confused by protobuf-generated code, that's why we must
         # disable the no-member check below.
         return TracesData(
-            resource_spans=encode_spans(sdk_spans).resource_spans # pylint: disable=no-member
+            resource_spans=encode_spans(sdk_spans).resource_spans  # pylint: disable=no-member
         ).SerializeToString()
 
     def shutdown(self) -> None:

@@ -1,15 +1,9 @@
 from typing import Sequence
 
-from snowflake.telemetry.test.metrictestutil import _generate_gauge, _generate_sum
-
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.util.instrumentation import InstrumentationScope
-
 from opentelemetry._logs import SeverityNumber
-from opentelemetry.sdk._logs import LogData, LogLimits, LogRecord
-
+from opentelemetry.sdk._logs import LogData, LogRecord
 from opentelemetry.sdk.metrics.export import (
-    AggregationTemporality, 
+    AggregationTemporality,
     Buckets,
     ExponentialHistogram,
     Histogram,
@@ -20,11 +14,12 @@ from opentelemetry.sdk.metrics.export import (
     ResourceMetrics,
     ScopeMetrics,
 )
-
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import Event, SpanContext, _Span
-from opentelemetry.trace import SpanKind, Link, TraceFlags
+from opentelemetry.sdk.util.instrumentation import InstrumentationScope
+from opentelemetry.trace import Link, TraceFlags
 from opentelemetry.trace.status import Status, StatusCode
-
+from snowflake.telemetry.test.metrictestutil import _generate_gauge, _generate_sum
 
 
 def get_logs_data() -> Sequence[LogData]:
@@ -106,11 +101,13 @@ def get_logs_data() -> Sequence[LogData]:
 
     return [log1, log2, log3, log4]
 
+
 def get_logs_data_4MB() -> Sequence[LogData]:
     out = []
     for _ in range(8000):
         out.extend(get_logs_data())
     return out
+
 
 HISTOGRAM = Metric(
     name="histogram",
@@ -158,8 +155,9 @@ EXPONENTIAL_HISTOGRAM = Metric(
         aggregation_temporality=AggregationTemporality.DELTA,
     ),
 )
-def get_metrics_data() -> MetricsData:
 
+
+def get_metrics_data() -> MetricsData:
     metrics = MetricsData(
         resource_metrics=[
             ResourceMetrics(
@@ -248,21 +246,22 @@ def get_metrics_data() -> MetricsData:
 
     return metrics
 
+
 def get_traces_data() -> Sequence[_Span]:
     trace_id = 0x3E0C63257DE34C926F9EFCD03927272E
 
-    base_time = 683647322 * 10**9  # in ns
+    base_time = 683647322 * 10 ** 9  # in ns
     start_times = (
         base_time,
-        base_time + 150 * 10**6,
-        base_time + 300 * 10**6,
-        base_time + 400 * 10**6,
+        base_time + 150 * 10 ** 6,
+        base_time + 300 * 10 ** 6,
+        base_time + 400 * 10 ** 6,
     )
     end_times = (
-        start_times[0] + (50 * 10**6),
-        start_times[1] + (100 * 10**6),
-        start_times[2] + (200 * 10**6),
-        start_times[3] + (300 * 10**6),
+        start_times[0] + (50 * 10 ** 6),
+        start_times[1] + (100 * 10 ** 6),
+        start_times[2] + (200 * 10 ** 6),
+        start_times[3] + (300 * 10 ** 6),
     )
 
     parent_span_context = SpanContext(
@@ -285,7 +284,7 @@ def get_traces_data() -> Sequence[_Span]:
         events=(
             Event(
                 name="event0",
-                timestamp=base_time + 50 * 10**6,
+                timestamp=base_time + 50 * 10 ** 6,
                 attributes={
                     "annotation_bool": True,
                     "annotation_string": "annotation_test",

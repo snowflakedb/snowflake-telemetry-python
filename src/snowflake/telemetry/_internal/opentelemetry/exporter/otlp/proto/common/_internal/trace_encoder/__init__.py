@@ -22,6 +22,10 @@ import logging
 from collections import defaultdict
 from typing import List, Optional, Sequence
 
+from opentelemetry.sdk.trace import Event, ReadableSpan
+from opentelemetry.trace import Link, SpanKind
+from opentelemetry.trace.span import SpanContext, Status, TraceState
+
 from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._internal import (
     _encode_attributes,
     _encode_instrumentation_scope,
@@ -39,9 +43,6 @@ from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler 
 from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import Span as PB2SPan
 from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import SpanFlags as PB2SpanFlags
 from snowflake.telemetry._internal.opentelemetry.proto.trace.v1.trace_marshaler import Status as PB2Status
-from opentelemetry.sdk.trace import Event, ReadableSpan
-from opentelemetry.trace import Link, SpanKind
-from opentelemetry.trace.span import SpanContext, Status, TraceState
 
 # pylint: disable=E1101
 _SPAN_KIND_MAP = {
@@ -56,7 +57,7 @@ _logger = logging.getLogger(__name__)
 
 
 def encode_spans(
-    sdk_spans: Sequence[ReadableSpan],
+        sdk_spans: Sequence[ReadableSpan],
 ) -> PB2ExportTraceServiceRequest:
     return PB2ExportTraceServiceRequest(
         resource_spans=_encode_resource_spans(sdk_spans)
@@ -64,7 +65,7 @@ def encode_spans(
 
 
 def _encode_resource_spans(
-    sdk_spans: Sequence[ReadableSpan],
+        sdk_spans: Sequence[ReadableSpan],
 ) -> List[PB2ResourceSpans]:
     # We need to inspect the spans and group + structure them as:
     #
@@ -138,7 +139,7 @@ def _encode_span(sdk_span: ReadableSpan) -> PB2SPan:
 
 
 def _encode_events(
-    events: Sequence[Event],
+        events: Sequence[Event],
 ) -> Optional[List[PB2SPan.Event]]:
     pb2_events = None
     if events:

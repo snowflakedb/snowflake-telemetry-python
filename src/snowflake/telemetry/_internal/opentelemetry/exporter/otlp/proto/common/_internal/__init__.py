@@ -33,23 +33,24 @@ from typing import (
     Iterator,
 )
 
+from opentelemetry.sdk.trace import Resource
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
+from opentelemetry.util.types import Attributes
+
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import AnyValue as PB2AnyValue
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
+    ArrayValue as PB2ArrayValue,
+)
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
     InstrumentationScope as PB2InstrumentationScope,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
-    Resource as PB2Resource,
-)
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import AnyValue as PB2AnyValue
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import KeyValue as PB2KeyValue
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
     KeyValueList as PB2KeyValueList,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
-    ArrayValue as PB2ArrayValue,
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
+    Resource as PB2Resource,
 )
-from opentelemetry.sdk.trace import Resource
-from opentelemetry.util.types import Attributes
 
 _logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ _ResourceDataT = TypeVar("_ResourceDataT")
 
 
 def _encode_instrumentation_scope(
-    instrumentation_scope: InstrumentationScope,
+        instrumentation_scope: InstrumentationScope,
 ) -> PB2InstrumentationScope:
     if instrumentation_scope is None:
         return PB2InstrumentationScope()
@@ -107,7 +108,7 @@ def _encode_trace_id(trace_id: int) -> bytes:
 
 
 def _encode_attributes(
-    attributes: Attributes,
+        attributes: Attributes,
 ) -> Optional[List[PB2KeyValue]]:
     if attributes:
         pb2_attributes = []
@@ -123,15 +124,15 @@ def _encode_attributes(
 
 
 def _get_resource_data(
-    sdk_resource_scope_data: Dict[Resource, _ResourceDataT],
-    resource_class: Callable[..., _TypingResourceT],
-    name: str,
+        sdk_resource_scope_data: Dict[Resource, _ResourceDataT],
+        resource_class: Callable[..., _TypingResourceT],
+        name: str,
 ) -> List[_TypingResourceT]:
     resource_data = []
 
     for (
-        sdk_resource,
-        scope_data,
+            sdk_resource,
+            scope_data,
     ) in sdk_resource_scope_data.items():
         collector_resource = PB2Resource(
             attributes=_encode_attributes(sdk_resource.attributes)
@@ -178,5 +179,5 @@ def _create_exp_backoff_generator(max_value: int = 0) -> Iterator[int]:
     Note: this functionality used to be handled by the 'backoff' package.
     """
     for i in count(0):
-        out = 2**i
+        out = 2 ** i
         yield min(out, max_value) if max_value else out

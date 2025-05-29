@@ -24,7 +24,7 @@ from opentelemetry.sdk.metrics.export import (
 
 
 def _generate_metric(
-    name, data, attributes=None, description=None, unit=None
+        name, data, attributes=None, description=None, unit=None
 ) -> Metric:
     if description is None:
         description = "foo"
@@ -39,12 +39,12 @@ def _generate_metric(
 
 
 def _generate_sum(
-    name,
-    value,
-    attributes=None,
-    description=None,
-    unit=None,
-    is_monotonic=True,
+        name,
+        value,
+        attributes=None,
+        description=None,
+        unit=None,
+        is_monotonic=True,
 ) -> Metric:
     if attributes is None:
         attributes = BoundedAttributes(attributes={"a": 1, "b": True})
@@ -68,7 +68,7 @@ def _generate_sum(
 
 
 def _generate_gauge(
-    name, value, attributes=None, description=None, unit=None
+        name, value, attributes=None, description=None, unit=None
 ) -> Metric:
     if attributes is None:
         attributes = BoundedAttributes(attributes={"a": 1, "b": True})
@@ -90,7 +90,7 @@ def _generate_gauge(
 
 
 def _generate_unsupported_metric(
-    name, attributes=None, description=None, unit=None
+        name, attributes=None, description=None, unit=None
 ) -> Metric:
     return _generate_metric(
         name,

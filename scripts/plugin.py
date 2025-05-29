@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-import re
-import os
-import sys
 import inspect
-from enum import IntEnum
-from typing import List, Optional
-from textwrap import dedent, indent
+import os
+import re
+import sys
 from dataclasses import dataclass, field
-# Must be imported into globals for the inline functions to work
-from snowflake.telemetry._internal.serialize import MessageMarshaler # noqa
+from enum import IntEnum
+from textwrap import dedent, indent
+from typing import List, Optional
 
+import black
+import isort.api
 from google.protobuf.compiler import plugin_pb2 as plugin
 from google.protobuf.descriptor_pb2 import (
     FileDescriptorProto,
@@ -22,13 +22,15 @@ from google.protobuf.descriptor_pb2 import (
     DescriptorProto,
 )
 from jinja2 import Environment, FileSystemLoader
-import black
-import isort.api
+
+# Must be imported into globals for the inline functions to work
+from snowflake.telemetry._internal.serialize import MessageMarshaler  # noqa
 
 INLINE_OPTIMIZATION = True
 FILE_PATH_PREFIX = "snowflake.telemetry._internal"
 FILE_NAME_SUFFIX = "_marshaler"
 OPENTELEMETRY_PROTO_DIR = os.environ["OPENTELEMETRY_PROTO_DIR"]
+
 
 # Inline utility functions
 
@@ -58,6 +60,7 @@ def inline_size_function(proto_type: str, attr_name: str, field_tag: str) -> str
     function_definition = function_definition.replace("return ", "size += ")
     return function_definition
 
+
 # Inline the serialization function for a given proto message field
 def inline_serialize_function(proto_type: str, attr_name: str, field_tag: str) -> str:
     """
@@ -84,6 +87,7 @@ def inline_serialize_function(proto_type: str, attr_name: str, field_tag: str) -
     function_definition = function_definition.replace("TAG", field_tag)
     return function_definition
 
+
 # Add a presence check to a function definition
 # https://protobuf.dev/programming-guides/proto3/#default
 def add_presence_check(proto_type: str, encode_presence: bool, attr_name: str, function_definition: str) -> str:
@@ -97,11 +101,13 @@ def add_presence_check(proto_type: str, encode_presence: bool, attr_name: str, f
     #   - double and float -0.0 should be encoded, even though bool(-0.0) is False
     return f"if self.{attr_name}:\n{function_definition}"
 
+
 class WireType(IntEnum):
     VARINT = 0
     I64 = 1
     LEN = 2
     I32 = 5
+
 
 @dataclass
 class ProtoTypeDescriptor:
@@ -109,6 +115,7 @@ class ProtoTypeDescriptor:
     wire_type: WireType
     python_type: str
     default_val: str
+
 
 proto_type_to_descriptor = {
     FieldDescriptorProto.TYPE_BOOL: ProtoTypeDescriptor("bool", WireType.VARINT, "bool", "False"),
@@ -130,6 +137,7 @@ proto_type_to_descriptor = {
     FieldDescriptorProto.TYPE_MESSAGE: ProtoTypeDescriptor("message", WireType.LEN, "PLACEHOLDER", "None"),
 }
 
+
 @dataclass
 class EnumValueTemplate:
     name: str
@@ -141,6 +149,7 @@ class EnumValueTemplate:
             name=descriptor.name,
             number=descriptor.number,
         )
+
 
 @dataclass
 class EnumTemplate:
@@ -154,6 +163,7 @@ class EnumTemplate:
             values=[EnumValueTemplate.from_descriptor(value) for value in descriptor.value],
         )
 
+
 def tag_to_repr_varint(tag: int) -> str:
     out = bytearray()
     while tag >= 128:
@@ -161,6 +171,7 @@ def tag_to_repr_varint(tag: int) -> str:
         tag >>= 7
     out.append(tag)
     return repr(bytes(out))
+
 
 @dataclass
 class FieldTemplate:
@@ -254,6 +265,7 @@ class FieldTemplate:
             size_field_inline=size_field_inline,
         )
 
+
 @dataclass
 class MessageTemplate:
     name: str
@@ -266,6 +278,7 @@ class MessageTemplate:
         # Helper function to extract the group name for a field, if it exists
         def get_group(field: FieldDescriptorProto) -> str:
             return descriptor.oneof_decl[field.oneof_index].name if field.HasField("oneof_index") else None
+
         fields = [FieldTemplate.from_descriptor(field, get_group(field)) for field in descriptor.field]
         fields.sort(key=lambda field: field.number)
 
@@ -276,6 +289,7 @@ class MessageTemplate:
             enums=[EnumTemplate.from_descriptor(enum) for enum in descriptor.enum_type],
             messages=[MessageTemplate.from_descriptor(message) for message in descriptor.nested_type],
         )
+
 
 @dataclass
 class FileTemplate:
@@ -315,6 +329,7 @@ class FileTemplate:
             preamble=preamble,
         )
 
+
 def main():
     request = plugin.CodeGeneratorRequest()
     request.ParseFromString(sys.stdin.buffer.read())
@@ -335,7 +350,7 @@ def main():
 
         code = jinja_body_template.render(file_template=file_template)
         code = isort.api.sort_code_string(
-            code = code,
+            code=code,
             show_diff=False,
             profile="black",
             combine_as_imports=True,
@@ -353,6 +368,7 @@ def main():
         response_file.content = code
 
     sys.stdout.buffer.write(response.SerializeToString())
+
 
 if __name__ == '__main__':
     main()
