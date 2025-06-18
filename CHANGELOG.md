@@ -1,5 +1,9 @@
 # Release History
 
+## 0.7.0 (2025-06-18)
+
+* Adds a `SnowflakeLogFormatter` implementation which can used to emit JSON logs in a format that can be parsed by Snowflake.
+
 ## 0.6.1 (2025-05-22)
 
 * Fix typo in CHANGELOG 
