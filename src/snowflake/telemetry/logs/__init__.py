@@ -34,12 +34,15 @@ _RESERVED_ATTRS = frozenset(
         "threadName",
         "taskName",
         # Params that Snowflake will populate and don't want users of this API to overwrite.
+        "body",
         "code.lineno",
         "code.function",
         "code.filepath",
         "exception.type",
         "exception.message",
         "exception.stacktrace",
+        "scope",
+        "severity_text",
     )
 )
 
@@ -75,6 +78,9 @@ class SnowflakeLogFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         log_items = {
+            "scope": {
+                "name": record.name,
+            },
             "body": record.getMessage(),
             "severity_text": self.get_severity_text(record.levelname),
             "code.lineno": record.lineno,
