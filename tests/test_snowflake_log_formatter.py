@@ -20,6 +20,9 @@ class TestSnowflakeLogFormatter(unittest.TestCase):
         """ Does the logger produce the correct output? """
         self.root_logger.warning('foo', extra={"test": 123, "code.lineno": 35})
         expected_log_message = {
+            "scope": {
+                "name": "test",
+            },
             "body": "foo",
             "severity_text": "WARN",
             "code.lineno": 21,
@@ -39,9 +42,12 @@ class TestSnowflakeLogFormatter(unittest.TestCase):
             self.root_logger.exception("\"test exception\"")
 
         expected_log_message = {
+            "scope": {
+                "name": "test",
+            },
             "body": "\"test exception\"",
             "severity_text": "ERROR",
-            "code.lineno": 39,
+            "code.lineno": 42,
             "code.function": "test_exception_log",
             "exception.type": "ZeroDivisionError",
             "exception.message": "division by zero",
@@ -49,7 +55,7 @@ class TestSnowflakeLogFormatter(unittest.TestCase):
         actual_log_message = json.loads(self.stream.getvalue(), strict=False)
         actual_log_message.pop("code.filepath")
         actual_stacktrace = actual_log_message.pop("exception.stacktrace")
-        self.assertIn("line 37, in test_exception_log\n", actual_stacktrace)
+        self.assertIn("line 40, in test_exception_log\n", actual_stacktrace)
         self.assertIn("ZeroDivisionError: division by zero\n", actual_stacktrace)
         self.assertEqual(expected_log_message, actual_log_message)
 
