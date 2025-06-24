@@ -66,7 +66,7 @@ class SnowflakeLogFormatter(logging.Formatter):
         """
         level = py_level_name.upper()
         if level not in _PY_LOG_LEVELS:
-            return "TRACE"
+            return "UNSPECIFIED"
         if level == "WARNING":
             return "WARN"
         if level == "CRITICAL":

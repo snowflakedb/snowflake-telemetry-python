@@ -60,5 +60,5 @@ class TestSnowflakeLogFormatter(unittest.TestCase):
         self.assertEqual("WARN", SnowflakeLogFormatter.get_severity_text("warning"))
         self.assertEqual("DEBUG", SnowflakeLogFormatter.get_severity_text("debug"))
         self.assertEqual("ERROR", SnowflakeLogFormatter.get_severity_text("error"))
-        self.assertEqual("TRACE", SnowflakeLogFormatter.get_severity_text("notset"))
-        self.assertEqual("TRACE", SnowflakeLogFormatter.get_severity_text("random"))
+        self.assertEqual("UNSPECIFIED", SnowflakeLogFormatter.get_severity_text("notset"))
+        self.assertEqual("UNSPECIFIED", SnowflakeLogFormatter.get_severity_text("random"))
