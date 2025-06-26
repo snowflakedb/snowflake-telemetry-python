@@ -34,15 +34,12 @@ _RESERVED_ATTRS = frozenset(
         "threadName",
         "taskName",
         # Params that Snowflake will populate and don't want users of this API to overwrite.
-        "body",
         "code.lineno",
         "code.function",
         "code.filepath",
         "exception.type",
         "exception.message",
         "exception.stacktrace",
-        "scope",
-        "severity_text",
     )
 )
 
@@ -83,6 +80,9 @@ class SnowflakeLogFormatter(logging.Formatter):
             },
             "body": record.getMessage(),
             "severity_text": self.get_severity_text(record.levelname),
+        }
+
+        attributes = {
             "code.lineno": record.lineno,
             "code.function": record.funcName,
             "code.filepath": record.pathname
@@ -91,19 +91,20 @@ class SnowflakeLogFormatter(logging.Formatter):
         if record.exc_info is not None:
             exctype, value, tb = record.exc_info
             if exctype is not None:
-                log_items["exception.type"] = exctype.__name__
+                attributes["exception.type"] = exctype.__name__
             if value is not None and value.args:
-                log_items["exception.message"] = value.args[0]
+                attributes["exception.message"] = value.args[0]
             if tb is not None:
-                log_items["exception.stacktrace"] = "".join(traceback.format_exception(*record.exc_info))
+                attributes["exception.stacktrace"] = "".join(traceback.format_exception(*record.exc_info))
             # Remove traceback to avoid emitting logs in incorrect format
             record.exc_info = None
 
         for attr, value in record.__dict__.items():
             if attr in _RESERVED_ATTRS:
                 continue
-            log_items[attr] = value
+            attributes[attr] = value
 
+        log_items["attributes"] = attributes
         return json.dumps(log_items)
 
 
