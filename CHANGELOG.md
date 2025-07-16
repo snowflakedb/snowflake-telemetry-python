@@ -1,5 +1,11 @@
 # Release History
 
+## 0.7.1 (2025-07-16)
+
+* Adds missing `scope` field to the `SnowflakeLogFormatter`.
+* Set `severity_text` to `UNSPECIFIED` when it is unavailable in `SnowflakeLogFormatter`.
+* Move log record attributes to nested `attributes` section in `SnowflakeLogFormatter`.
+
 ## 0.7.0 (2025-06-18)
 
 * Adds a `SnowflakeLogFormatter` implementation which can used to emit JSON logs in a format that can be parsed by Snowflake.
