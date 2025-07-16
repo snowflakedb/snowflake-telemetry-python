@@ -4,4 +4,4 @@
 #
 
 """Update this for the versions."""
-VERSION = "0.7.1.dev"
+VERSION = "0.7.1"
