@@ -14,7 +14,7 @@
 #
 # This file has been modified from the original source code at
 #
-#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.26.0
+#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.35.0
 #
 # by Snowflake Inc.
 
@@ -95,6 +95,9 @@ def _encode_resource_spans(
                 PB2ScopeSpans(
                     scope=(_encode_instrumentation_scope(sdk_instrumentation)),
                     spans=pb2_spans,
+                    schema_url=sdk_instrumentation.schema_url
+                    if sdk_instrumentation
+                    else None,
                 )
             )
         pb2_resource_spans.append(
@@ -163,7 +166,7 @@ def _encode_links(links: Sequence[Link]) -> Sequence[PB2SPan.Link]:
                 trace_id=_encode_trace_id(link.context.trace_id),
                 span_id=_encode_span_id(link.context.span_id),
                 attributes=_encode_attributes(link.attributes),
-                dropped_attributes_count=link.attributes.dropped,
+                dropped_attributes_count=link.dropped_attributes,
                 flags=_span_flags(link.context),
             )
             pb2_links.append(encoded_link)

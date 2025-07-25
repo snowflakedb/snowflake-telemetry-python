@@ -84,7 +84,13 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
     discarded by the original implementation.
     """
 
-    LOGGER_NAME_TEMP_ATTRIBUTE = "__snow.logging.temp.logger_name"
+    LOGGER_NAME_TEMP_ATTRIBUTE: typing.Final = "__snow.logging.temp.logger_name"
+    CODE_FILEPATH: typing.Final = "code.filepath"
+    CODE_FILE_PATH: typing.Final = "code.file.path"
+    CODE_FUNCTION: typing.Final = "code.function"
+    CODE_FUNCTION_NAME: typing.Final = "code.function.name"
+    CODE_LINENO: typing.Final = "code.lineno"
+    CODE_LINE_NUMBER: typing.Final = "code.line.number"
 
     def __init__(
             self,
@@ -100,6 +106,17 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
     @staticmethod
     def _get_attributes(record: logging.LogRecord) -> types.Attributes:
         attributes = _logs.LoggingHandler._get_attributes(record) # pylint: disable=protected-access
+
+        # Preserving old naming conventions for code attributes that were changed as part of
+        # https://github.com/open-telemetry/opentelemetry-python/commit/1b1e8d80c764ad3aa76abfb56a7002ddea11fdb5 in
+        # order to avoid a behavior change for Snowflake customers.
+        if SnowflakeLoggingHandler.CODE_FILE_PATH in attributes:
+            attributes[SnowflakeLoggingHandler.CODE_FILEPATH] = attributes.pop(SnowflakeLoggingHandler.CODE_FILE_PATH)
+        if SnowflakeLoggingHandler.CODE_FUNCTION_NAME in attributes:
+            attributes[SnowflakeLoggingHandler.CODE_FUNCTION] = attributes.pop(
+                SnowflakeLoggingHandler.CODE_FUNCTION_NAME)
+        if SnowflakeLoggingHandler.CODE_LINE_NUMBER in attributes:
+            attributes[SnowflakeLoggingHandler.CODE_LINENO] = attributes.pop(SnowflakeLoggingHandler.CODE_LINE_NUMBER)
 
         # Temporarily storing logger's name in record's attributes.
         # This attribute will be removed by the logger.
@@ -159,7 +176,7 @@ class _SnowflakeTelemetryLogger(_logs.Logger):
         #  2. It would emit a log record with the default instrumentation scope,
         #     not with the scope we want.
         log_data = _logs.LogData(record, current_scope)
-        self._multi_log_record_processor.emit(log_data)
+        self._multi_log_record_processor.on_emit(log_data)
 
 
 class _SnowflakeTelemetryLoggerProvider(_logs.LoggerProvider):
