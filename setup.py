@@ -17,6 +17,8 @@ VERSION = None
 with open(os.path.join(SNOWFLAKE_TELEMETRY_SRC_DIR, "version.py"), encoding="utf-8") as f:
     exec(f.read())
 
+REQUIRED_PYTHON_VERSION = ">=3.9, <3.13"
+
 
 setup(
     name="snowflake-telemetry-python",
@@ -26,6 +28,7 @@ setup(
     url="https://www.snowflake.com/",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
+    python_requires=REQUIRED_PYTHON_VERSION,
     install_requires=[
         "opentelemetry-api == 1.26.0",
         "opentelemetry-sdk == 1.26.0",
@@ -48,12 +51,11 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: SQL",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
         "Topic :: Database",
         "Topic :: Software Development",
         "Topic :: Software Development :: Libraries",
