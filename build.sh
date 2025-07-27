@@ -14,7 +14,7 @@
 # create official build artifacts, you can test it on your MacBook by
 # installing miniconda3, then creating an environment like this:
 #
-# conda create -n my-conda-build-environment python=3.8 conda-build git
+# conda create -n my-conda-build-environment python=3.9 conda-build git
 # conda activate my-conda-build-environment
 # # cd into the snowflake-telemetry-python git root dir
 # export SNOWFLAKE_TELEMETRY_DIR=$(pwd)
