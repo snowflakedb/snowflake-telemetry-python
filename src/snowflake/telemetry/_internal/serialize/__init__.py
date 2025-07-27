@@ -194,6 +194,38 @@ class MessageMarshaler:
         self.marshaler_cache[TAG] = s
         return len(TAG) + s + Varint.size_varint_u32(s)
 
+    def size_repeated_string(self, TAG: bytes, FIELD_ATTR: List[str]) -> int:
+        size = 0
+        for s in FIELD_ATTR:
+            string_data = s.encode("utf-8")
+            size += len(TAG) + Varint.size_varint_u32(len(string_data)) + len(string_data)
+        return size
+
+    def size_repeated_int32(self, TAG: bytes, FIELD_ATTR: List[int]) -> int:
+        s = sum(Varint.size_varint_i32(int32) for int32 in FIELD_ATTR)
+        self.marshaler_cache[TAG] = s
+        return len(TAG) + s + Varint.size_varint_u32(s)
+
+    def size_repeated_int64(self, TAG: bytes, FIELD_ATTR: List[int]) -> int:
+        s = sum(Varint.size_varint_i64(int64) for int64 in FIELD_ATTR)
+        self.marshaler_cache[TAG] = s
+        return len(TAG) + s + Varint.size_varint_u32(s)
+
+    def size_repeated_uint32(self, TAG: bytes, FIELD_ATTR: List[int]) -> int:
+        s = sum(Varint.size_varint_u32(uint32) for uint32 in FIELD_ATTR)
+        self.marshaler_cache[TAG] = s
+        return len(TAG) + s + Varint.size_varint_u32(s)
+
+    def size_repeated_sint32(self, TAG: bytes, FIELD_ATTR: List[int]) -> int:
+        s = sum(Varint.size_varint_s32(sint32) for sint32 in FIELD_ATTR)
+        self.marshaler_cache[TAG] = s
+        return len(TAG) + s + Varint.size_varint_u32(s)
+
+    def size_repeated_sint64(self, TAG: bytes, FIELD_ATTR: List[int]) -> int:
+        s = sum(Varint.size_varint_s64(sint64) for sint64 in FIELD_ATTR)
+        self.marshaler_cache[TAG] = s
+        return len(TAG) + s + Varint.size_varint_u32(s)
+
     def serialize_bool(self, out: bytearray, TAG: bytes, FIELD_ATTR: bool) -> None:
         out += TAG
         Varint.write_varint_u32(out, 1 if FIELD_ATTR else 0)
@@ -292,3 +324,40 @@ class MessageMarshaler:
         Varint.write_varint_u32(out, self.marshaler_cache[TAG])
         for v in FIELD_ATTR:
             Varint.write_varint_u64(out, v)
+
+    def serialize_repeated_string(self, out: bytearray, TAG: bytes, FIELD_ATTR: List[str]) -> None:
+        for v in FIELD_ATTR:
+            out += TAG
+            data = v.encode("utf-8")
+            Varint.write_varint_u32(out, len(data))
+            out += data
+
+    def serialize_repeated_int32(self, out: bytearray, TAG: bytes, FIELD_ATTR: List[int]) -> None:
+        out += TAG
+        Varint.write_varint_u32(out, self.marshaler_cache[TAG])
+        for v in FIELD_ATTR:
+            Varint.write_varint_i32(out, v)
+
+    def serialize_repeated_int64(self, out: bytearray, TAG: bytes, FIELD_ATTR: List[int]) -> None:
+        out += TAG
+        Varint.write_varint_u32(out, self.marshaler_cache[TAG])
+        for v in FIELD_ATTR:
+            Varint.write_varint_i64(out, v)
+
+    def serialize_repeated_uint32(self, out: bytearray, TAG: bytes, FIELD_ATTR: List[int]) -> None:
+        out += TAG
+        Varint.write_varint_u32(out, self.marshaler_cache[TAG])
+        for v in FIELD_ATTR:
+            Varint.write_varint_u32(out, v)
+
+    def serialize_repeated_sint32(self, out: bytearray, TAG: bytes, FIELD_ATTR: List[int]) -> None:
+        out += TAG
+        Varint.write_varint_u32(out, self.marshaler_cache[TAG])
+        for v in FIELD_ATTR:
+            Varint.write_varint_s32(out, v)
+
+    def serialize_repeated_sint64(self, out: bytearray, TAG: bytes, FIELD_ATTR: List[int]) -> None:
+        out += TAG
+        Varint.write_varint_u32(out, self.marshaler_cache[TAG])
+        for v in FIELD_ATTR:
+            Varint.write_varint_s64(out, v)

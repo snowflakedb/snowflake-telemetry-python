@@ -45,13 +45,21 @@ class Resource(MessageMarshaler):
 
     dropped_attributes_count: int
 
+    @property
+    def entity_refs(self) -> List[EntityRef]:
+        if self._entity_refs is None:
+            self._entity_refs = list()
+        return self._entity_refs
+
     def __init__(
         self,
         attributes: List[KeyValue] = None,
         dropped_attributes_count: int = 0,
+        entity_refs: List[EntityRef] = None,
     ):
         self._attributes: List[KeyValue] = attributes
         self.dropped_attributes_count: int = dropped_attributes_count
+        self._entity_refs: List[EntityRef] = entity_refs
 
     def calculate_size(self) -> int:
         size = 0
@@ -64,6 +72,13 @@ class Resource(MessageMarshaler):
             )
         if self.dropped_attributes_count:
             size += len(b"\x10") + Varint.size_varint_u32(self.dropped_attributes_count)
+        if self._entity_refs:
+            size += sum(
+                message._get_size()
+                + len(b"\x1a")
+                + Varint.size_varint_u32(message._get_size())
+                for message in self._entity_refs
+            )
         return size
 
     def write_to(self, out: bytearray) -> None:
@@ -75,3 +90,8 @@ class Resource(MessageMarshaler):
         if self.dropped_attributes_count:
             out += b"\x10"
             Varint.write_varint_u32(out, self.dropped_attributes_count)
+        if self._entity_refs:
+            for v in self._entity_refs:
+                out += b"\x1a"
+                Varint.write_varint_u32(out, v._get_size())
+                v.write_to(out)
