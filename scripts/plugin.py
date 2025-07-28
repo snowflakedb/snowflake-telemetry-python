@@ -183,7 +183,7 @@ class FieldTemplate:
 
         if proto_type == "message" or proto_type == "enum":
             # Extract the class name of message fields, to use as python type
-            python_type = re.sub(r"^[a-zA-Z0-9_\.]+\.v1\.", "", descriptor.type_name)
+            python_type = re.sub(r"^[a-zA-Z0-9_\.]+\.v1[a-zA-Z0-9]*\.", "", descriptor.type_name)
 
         repeated = descriptor.label == FieldDescriptorProto.LABEL_REPEATED
         if repeated:

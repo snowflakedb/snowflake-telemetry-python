@@ -301,3 +301,86 @@ class InstrumentationScope(MessageMarshaler):
         if self.dropped_attributes_count:
             out += b" "
             Varint.write_varint_u32(out, self.dropped_attributes_count)
+
+
+class EntityRef(MessageMarshaler):
+    schema_url: str
+    type: str
+
+    @property
+    def id_keys(self) -> List[str]:
+        if self._id_keys is None:
+            self._id_keys = list()
+        return self._id_keys
+
+    @property
+    def description_keys(self) -> List[str]:
+        if self._description_keys is None:
+            self._description_keys = list()
+        return self._description_keys
+
+    def __init__(
+        self,
+        schema_url: str = "",
+        type: str = "",
+        id_keys: List[str] = None,
+        description_keys: List[str] = None,
+    ):
+        self.schema_url: str = schema_url
+        self.type: str = type
+        self._id_keys: List[str] = id_keys
+        self._description_keys: List[str] = description_keys
+
+    def calculate_size(self) -> int:
+        size = 0
+        if self.schema_url:
+            v = self.schema_url.encode("utf-8")
+            size += len(b"\n") + Varint.size_varint_u32(len(v)) + len(v)
+        if self.type:
+            v = self.type.encode("utf-8")
+            size += len(b"\x12") + Varint.size_varint_u32(len(v)) + len(v)
+        if self._id_keys:
+            size = 0
+            for s in self._id_keys:
+                string_data = s.encode("utf-8")
+                size += (
+                    len(b"\x1a")
+                    + Varint.size_varint_u32(len(string_data))
+                    + len(string_data)
+                )
+            size += size
+        if self._description_keys:
+            size = 0
+            for s in self._description_keys:
+                string_data = s.encode("utf-8")
+                size += (
+                    len(b'"')
+                    + Varint.size_varint_u32(len(string_data))
+                    + len(string_data)
+                )
+            size += size
+        return size
+
+    def write_to(self, out: bytearray) -> None:
+        if self.schema_url:
+            v = self.schema_url.encode("utf-8")
+            out += b"\n"
+            Varint.write_varint_u32(out, len(v))
+            out += v
+        if self.type:
+            v = self.type.encode("utf-8")
+            out += b"\x12"
+            Varint.write_varint_u32(out, len(v))
+            out += v
+        if self._id_keys:
+            for v in self._id_keys:
+                out += b"\x1a"
+                data = v.encode("utf-8")
+                Varint.write_varint_u32(out, len(data))
+                out += data
+        if self._description_keys:
+            for v in self._description_keys:
+                out += b'"'
+                data = v.encode("utf-8")
+                Varint.write_varint_u32(out, len(data))
+                out += data

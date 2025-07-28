@@ -248,6 +248,7 @@ class LogRecord(MessageMarshaler):
     trace_id: bytes
     span_id: bytes
     observed_time_unix_nano: int
+    event_name: str
 
     def __init__(
         self,
@@ -261,6 +262,7 @@ class LogRecord(MessageMarshaler):
         trace_id: bytes = b"",
         span_id: bytes = b"",
         observed_time_unix_nano: int = 0,
+        event_name: str = "",
     ):
         self.time_unix_nano: int = time_unix_nano
         self.severity_number: SeverityNumber = severity_number
@@ -272,6 +274,7 @@ class LogRecord(MessageMarshaler):
         self.trace_id: bytes = trace_id
         self.span_id: bytes = span_id
         self.observed_time_unix_nano: int = observed_time_unix_nano
+        self.event_name: str = event_name
 
     def calculate_size(self) -> int:
         size = 0
@@ -316,6 +319,9 @@ class LogRecord(MessageMarshaler):
             )
         if self.observed_time_unix_nano:
             size += len(b"Y") + 8
+        if self.event_name:
+            v = self.event_name.encode("utf-8")
+            size += len(b"b") + Varint.size_varint_u32(len(v)) + len(v)
         return size
 
     def write_to(self, out: bytearray) -> None:
@@ -359,3 +365,8 @@ class LogRecord(MessageMarshaler):
         if self.observed_time_unix_nano:
             out += b"Y"
             out += struct.pack("<Q", self.observed_time_unix_nano)
+        if self.event_name:
+            v = self.event_name.encode("utf-8")
+            out += b"b"
+            Varint.write_varint_u32(out, len(v))
+            out += v
