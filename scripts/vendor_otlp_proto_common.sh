@@ -9,7 +9,7 @@
 # fixes needed in the OTLP exporter.
 
 # Pinned commit/branch/tag for the current version used in opentelemetry-proto python package.
-REPO_BRANCH_OR_COMMIT="v1.26.0"
+REPO_BRANCH_OR_COMMIT="v1.35.0"
 
 set -e
 

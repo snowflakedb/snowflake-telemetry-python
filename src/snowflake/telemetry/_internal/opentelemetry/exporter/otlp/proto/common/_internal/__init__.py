@@ -14,42 +14,42 @@
 #
 # This file has been modified from the original source code at
 #
-#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.26.0
+#     https://github.com/open-telemetry/opentelemetry-python/tree/v1.35.0
 #
 # by Snowflake Inc.
 
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Sequence
-from itertools import count
 from typing import (
     Any,
+    Callable,
+    Dict,
+    List,
     Mapping,
     Optional,
-    List,
-    Callable,
     TypeVar,
-    Dict,
-    Iterator,
 )
 
-from opentelemetry.sdk.util.instrumentation import InstrumentationScope
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import AnyValue as PB2AnyValue
+from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
+    ArrayValue as PB2ArrayValue,
+)
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
     InstrumentationScope as PB2InstrumentationScope,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
-    Resource as PB2Resource,
-)
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import AnyValue as PB2AnyValue
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import KeyValue as PB2KeyValue
 from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
     KeyValueList as PB2KeyValueList,
 )
-from snowflake.telemetry._internal.opentelemetry.proto.common.v1.common_marshaler import (
-    ArrayValue as PB2ArrayValue,
+from snowflake.telemetry._internal.opentelemetry.proto.resource.v1.resource_marshaler import (
+    Resource as PB2Resource,
 )
 from opentelemetry.sdk.trace import Resource
-from opentelemetry.util.types import Attributes
+from opentelemetry.sdk.util.instrumentation import InstrumentationScope
+from opentelemetry.util.types import _ExtendedAttributes
 
 _logger = logging.getLogger(__name__)
 
@@ -65,6 +65,7 @@ def _encode_instrumentation_scope(
     return PB2InstrumentationScope(
         name=instrumentation_scope.name,
         version=instrumentation_scope.version,
+        attributes=_encode_attributes(instrumentation_scope.attributes),
     )
 
 
@@ -72,7 +73,11 @@ def _encode_resource(resource: Resource) -> PB2Resource:
     return PB2Resource(attributes=_encode_attributes(resource.attributes))
 
 
-def _encode_value(value: Any) -> PB2AnyValue:
+def _encode_value(
+    value: Any, allow_null: bool = False
+) -> Optional[PB2AnyValue]:
+    if allow_null is True and value is None:
+        return None
     if isinstance(value, bool):
         return PB2AnyValue(bool_value=value)
     if isinstance(value, str):
@@ -81,21 +86,49 @@ def _encode_value(value: Any) -> PB2AnyValue:
         return PB2AnyValue(int_value=value)
     if isinstance(value, float):
         return PB2AnyValue(double_value=value)
+    if isinstance(value, bytes):
+        return PB2AnyValue(bytes_value=value)
     if isinstance(value, Sequence):
         return PB2AnyValue(
-            array_value=PB2ArrayValue(values=[_encode_value(v) for v in value])
+            array_value=PB2ArrayValue(
+                values=_encode_array(value, allow_null=allow_null)
+            )
         )
     elif isinstance(value, Mapping):
         return PB2AnyValue(
             kvlist_value=PB2KeyValueList(
-                values=[_encode_key_value(str(k), v) for k, v in value.items()]
+                values=[
+                    _encode_key_value(str(k), v, allow_null=allow_null)
+                    for k, v in value.items()
+                ]
             )
         )
     raise Exception(f"Invalid type {type(value)} of value {value}")
 
 
-def _encode_key_value(key: str, value: Any) -> PB2KeyValue:
-    return PB2KeyValue(key=key, value=_encode_value(value))
+def _encode_key_value(
+    key: str, value: Any, allow_null: bool = False
+) -> PB2KeyValue:
+    return PB2KeyValue(
+        key=key, value=_encode_value(value, allow_null=allow_null)
+    )
+
+
+def _encode_array(
+    array: Sequence[Any], allow_null: bool = False
+) -> Sequence[PB2AnyValue]:
+    if not allow_null:
+        # Let the exception get raised by _encode_value()
+        return [_encode_value(v, allow_null=allow_null) for v in array]
+
+    return [
+        _encode_value(v, allow_null=allow_null)
+        if v is not None
+        # Use an empty AnyValue to represent None in an array. Behavior may change pending
+        # https://github.com/open-telemetry/opentelemetry-specification/issues/4392
+        else PB2AnyValue()
+        for v in array
+    ]
 
 
 def _encode_span_id(span_id: int) -> bytes:
@@ -107,14 +140,17 @@ def _encode_trace_id(trace_id: int) -> bytes:
 
 
 def _encode_attributes(
-    attributes: Attributes,
+    attributes: _ExtendedAttributes,
+    allow_null: bool = False,
 ) -> Optional[List[PB2KeyValue]]:
     if attributes:
         pb2_attributes = []
         for key, value in attributes.items():
             # pylint: disable=broad-exception-caught
             try:
-                pb2_attributes.append(_encode_key_value(key, value))
+                pb2_attributes.append(
+                    _encode_key_value(key, value, allow_null=allow_null)
+                )
             except Exception as error:
                 _logger.exception("Failed to encode key %s: %s", key, error)
     else:
@@ -145,38 +181,3 @@ def _get_resource_data(
             )
         )
     return resource_data
-
-
-def _create_exp_backoff_generator(max_value: int = 0) -> Iterator[int]:
-    """
-    Generates an infinite sequence of exponential backoff values. The sequence starts
-    from 1 (2^0) and doubles each time (2^1, 2^2, 2^3, ...). If a max_value is specified
-    and non-zero, the generated values will not exceed this maximum, capping at max_value
-    instead of growing indefinitely.
-
-    Parameters:
-    - max_value (int, optional): The maximum value to yield. If 0 or not provided, the
-      sequence grows without bound.
-
-    Returns:
-    Iterator[int]: An iterator that yields the exponential backoff values, either uncapped or
-    capped at max_value.
-
-    Example:
-    ```
-    gen = _create_exp_backoff_generator(max_value=10)
-    for _ in range(5):
-        print(next(gen))
-    ```
-    This will print:
-    1
-    2
-    4
-    8
-    10
-
-    Note: this functionality used to be handled by the 'backoff' package.
-    """
-    for i in count(0):
-        out = 2**i
-        yield min(out, max_value) if max_value else out

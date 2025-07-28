@@ -6,7 +6,7 @@ The following notices are required by licensors of software used in the Snowflak
 --------------------------------------------------------------------------------
 
 This library includes software which is copied from or derived from the OpenTelemetry Python API and SDK.
-OpenTelemetry Python v1.26.0
+OpenTelemetry Python v1.35.0
 https://github.com/open-telemetry/opentelemetry-python
 
                                  Apache License
