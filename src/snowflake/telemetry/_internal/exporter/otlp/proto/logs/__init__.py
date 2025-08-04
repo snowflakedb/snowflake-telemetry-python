@@ -15,11 +15,7 @@ Please see the class documentation for those classes to learn more.
 
 import abc
 import logging
-import logging.config
-import threading
 import typing
-import opentelemetry.sdk.util.instrumentation as otel_instrumentation
-import opentelemetry.sdk._logs._internal as _logs_internal
 
 from snowflake.telemetry._internal.opentelemetry.exporter.otlp.proto.common._log_encoder import (
     encode_logs,
@@ -84,16 +80,22 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
     discarded by the original implementation.
     """
 
-    LOGGER_NAME_TEMP_ATTRIBUTE = "__snow.logging.temp.logger_name"
+    CODE_FILEPATH: typing.Final = "code.filepath"
+    CODE_FILE_PATH: typing.Final = "code.file.path"
+    CODE_FUNCTION: typing.Final = "code.function"
+    CODE_FUNCTION_NAME: typing.Final = "code.function.name"
+    CODE_LINENO: typing.Final = "code.lineno"
+    CODE_LINE_NUMBER: typing.Final = "code.line.number"
 
     def __init__(
             self,
             log_writer: LogWriter,
         ):
         exporter = _ProtoLogExporter(log_writer)
-        provider = _SnowflakeTelemetryLoggerProvider()
-        provider.add_log_record_processor(
-            export.SimpleLogRecordProcessor(exporter)
+        processor = export.SimpleLogRecordProcessor(exporter)
+        provider = _logs.LoggerProvider(
+            resource=Resource.get_empty(),
+            multi_log_record_processor=processor
         )
         super().__init__(logger_provider=provider)
 
@@ -101,87 +103,23 @@ class SnowflakeLoggingHandler(_logs.LoggingHandler):
     def _get_attributes(record: logging.LogRecord) -> types.Attributes:
         attributes = _logs.LoggingHandler._get_attributes(record) # pylint: disable=protected-access
 
-        # Temporarily storing logger's name in record's attributes.
-        # This attribute will be removed by the logger.
-        #
-        # TODO (SNOW-1235374): opentelemetry-python issue #2485: Record logger
-        # name as the instrumentation scope name
-        attributes[SnowflakeLoggingHandler.LOGGER_NAME_TEMP_ATTRIBUTE] = record.name
+        # Preserving old naming conventions for code attributes that were changed as part of
+        # https://github.com/open-telemetry/opentelemetry-python/commit/1b1e8d80c764ad3aa76abfb56a7002ddea11fdb5 in
+        # order to avoid a behavior change for Snowflake customers.
+        if SnowflakeLoggingHandler.CODE_FILE_PATH in attributes:
+            attributes[SnowflakeLoggingHandler.CODE_FILEPATH] = attributes.pop(SnowflakeLoggingHandler.CODE_FILE_PATH)
+        if SnowflakeLoggingHandler.CODE_FUNCTION_NAME in attributes:
+            attributes[SnowflakeLoggingHandler.CODE_FUNCTION] = attributes.pop(
+                SnowflakeLoggingHandler.CODE_FUNCTION_NAME)
+        if SnowflakeLoggingHandler.CODE_LINE_NUMBER in attributes:
+            attributes[SnowflakeLoggingHandler.CODE_LINENO] = attributes.pop(SnowflakeLoggingHandler.CODE_LINE_NUMBER)
+
         return attributes
 
     def _translate(self, record: logging.LogRecord) -> _logs.LogRecord:
         otel_record = super()._translate(record)
         otel_record.severity_text = SnowflakeLogFormatter.get_severity_text(record.levelname)
         return otel_record
-
-
-class _SnowflakeTelemetryLogger(_logs.Logger):
-    """
-    An Open Telemetry Logger which creates an InstrumentationScope for each
-    logger name it encounters.
-    """
-
-    def __init__(
-        self,
-        resource: Resource,
-        multi_log_record_processor: typing.Union[
-            _logs_internal.SynchronousMultiLogRecordProcessor,
-            _logs_internal.ConcurrentMultiLogRecordProcessor,
-        ],
-        instrumentation_scope: otel_instrumentation.InstrumentationScope,
-    ):
-        super().__init__(resource, multi_log_record_processor, instrumentation_scope)
-        self._lock = threading.Lock()
-        self.cached_scopes = {}
-
-    def emit(self, record: _logs.LogRecord):
-        if SnowflakeLoggingHandler.LOGGER_NAME_TEMP_ATTRIBUTE not in record.attributes:
-            # The record doesn't contain our custom attribute with a logger name,
-            # so we can call the superclass's `emit` method. It will emit a log
-            # record with the default instrumentation scope.
-            super().emit(record)
-            return
-
-        # Creating an InstrumentationScope for each logger name,
-        # and caching those scopes.
-        logger_name = record.attributes[SnowflakeLoggingHandler.LOGGER_NAME_TEMP_ATTRIBUTE]
-        del record.attributes[SnowflakeLoggingHandler.LOGGER_NAME_TEMP_ATTRIBUTE]
-        with self._lock:
-            if logger_name in self.cached_scopes:
-                current_scope = self.cached_scopes[logger_name]
-            else:
-                current_scope = otel_instrumentation.InstrumentationScope(logger_name)
-                self.cached_scopes[logger_name] = current_scope
-
-        # Emitting a record with a scope that corresponds to the logger
-        # that logged it. NOT calling the superclass here for two reasons:
-        #  1. Logger.emit takes a LogRecord, not LogData.
-        #  2. It would emit a log record with the default instrumentation scope,
-        #     not with the scope we want.
-        log_data = _logs.LogData(record, current_scope)
-        self._multi_log_record_processor.emit(log_data)
-
-
-class _SnowflakeTelemetryLoggerProvider(_logs.LoggerProvider):
-    """
-    A LoggerProvider that creates SnowflakeTelemetryLoggers
-    """
-
-    def get_logger(
-            self, name: str,
-            version: types.Optional[str] = None,
-            schema_url: types.Optional[str] = None,
-            attributes: types.Optional[types.Attributes] = None,
-    ) -> _logs.Logger:
-        return _SnowflakeTelemetryLogger(
-            Resource.get_empty(),
-            self._multi_log_record_processor,
-            otel_instrumentation.InstrumentationScope(
-                name,
-                version,
-                schema_url,
-            ),
-        )
 
 
 __all__ = [

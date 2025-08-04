@@ -14,8 +14,8 @@ requirements:
         - setuptools >=40.0.0
     run:
         - python
-        - opentelemetry-api ==1.26.0
-        - opentelemetry-sdk ==1.26.0
+        - opentelemetry-api ==1.35.0
+        - opentelemetry-sdk ==1.35.0
 
 about:
     home: https://www.snowflake.com/
