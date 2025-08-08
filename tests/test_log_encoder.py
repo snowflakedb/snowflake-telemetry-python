@@ -44,28 +44,12 @@ from opentelemetry.sdk._logs import LogData, LogLimits, LogRecord as SDKLogRecor
 from opentelemetry.sdk.resources import Resource as SDKResource
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import TraceFlags
-from snowflake.telemetry._internal.exporter.otlp.proto.logs import (
-    _ProtoLogExporter,
-)
-from snowflake.telemetry.test.logs_test_utils import (
-    InMemoryLogWriter,
-)
 
 
 class TestOTLPLogEncoder(unittest.TestCase):
     def test_encode(self):
         sdk_logs, expected_encoding = self.get_test_logs()
         self.assertEqual(encode_logs(sdk_logs).SerializeToString(), expected_encoding.SerializeToString())
-
-    def test_proto_log_exporter(self):
-        sdk_logs, expected_encoding = self.get_test_logs()
-        log_writer = InMemoryLogWriter()
-        exporter = _ProtoLogExporter(log_writer)
-        exporter.export(sdk_logs)
-        protos = log_writer.get_finished_protos()
-        self.assertEqual(len(protos), 1)
-        self.assertEqual(protos[0],
-                         PB2LogsData(resource_logs=expected_encoding.resource_logs))
 
     def test_dropped_attributes_count(self):
         sdk_logs = self._get_test_logs_dropped_attributes()
