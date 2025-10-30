@@ -1,5 +1,9 @@
 # Release History
 
+## Unreleased
+
+* Add python 3.14 support.
+
 ## 0.7.1 (2025-07-16)
 
 * Adds missing `scope` field to the `SnowflakeLogFormatter`.
