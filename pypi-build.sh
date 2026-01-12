@@ -31,6 +31,9 @@ python3 -m pip install --upgrade build
 rm -rf ./dist
 mkdir ./dist
 
+# pre-compile .py files to .pyc (creates __pycache__/ directories)
+python3 -m compileall src/
+
 # set default build number to 0, if SNOWFLAKE_TELEMETRY_BUILD_NUMBER is not set
 echo "Start building snowflake-telemetry-python package with build_number: ${SNOWFLAKE_TELEMETRY_BUILD_NUMBER:=0}"
 SNOWFLAKE_TELEMETRY_BUILD_NUMBER=${SNOWFLAKE_TELEMETRY_BUILD_NUMBER:=0} python3 -m build

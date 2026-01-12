@@ -39,6 +39,10 @@ setup(
     package_dir={
         "": "src",
     },
+    include_package_data=True,
+    package_data={
+        "": ["__pycache__/*.pyc"],
+    },
     keywords="Snowflake db database cloud analytics warehouse",
     classifiers=[
         "Development Status :: 1 - Planning",
