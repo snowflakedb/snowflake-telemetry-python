@@ -1,8 +1,30 @@
 import os
+import sys
 from setuptools import (
     find_namespace_packages,
     setup,
 )
+
+# Custom bdist_wheel to create Python version-specific but platform-independent wheels
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+
+    class bdist_wheel(_bdist_wheel):
+        def finalize_options(self):
+            _bdist_wheel.finalize_options(self)
+            # Keep platform as "any" (platform-independent)
+            self.root_is_pure = True
+
+        def get_tag(self):
+            python, abi, plat = _bdist_wheel.get_tag(self)
+            # Use specific Python version tag (e.g., cp311) instead of generic py3
+            python = f"cp{sys.version_info.major}{sys.version_info.minor}"
+            # No ABI dependency, any platform
+            return (python, "none", "any")
+
+    cmdclass = {"bdist_wheel": bdist_wheel}
+except ImportError:
+    cmdclass = {}
 
 DESCRIPTION = 'Snowflake Telemetry for Python'
 LONG_DESCRIPTION = """This package provides a set of telemetry APIs for developers building on the Snowflake platform.
@@ -76,4 +98,5 @@ setup(
         "Repository": "https://github.com/snowflakedb/snowflake-telemetry-python/",
     },
     zip_safe=True,
+    cmdclass=cmdclass,
 )
