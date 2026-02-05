@@ -1,0 +1,30 @@
+{% set name = "snowflake-telemetry-python" %}
+{% set version = "0.7.2.dev" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
+
+build:
+  number: {{ build_number }}
+  skip: True  # [py<38 or win32 or s390x]
+  script: {{ PYTHON }} -m pip install . --no-deps -vvv
+
+
+requirements:
+  build:
+    - python
+    - setuptools >=40.0.0
+  run:
+    - python
+    - opentelemetry-api ==1.38.0
+    - opentelemetry-sdk ==1.38.0
+
+about:
+  home: https://www.snowflake.com/
+  license: Apache 2.0
+  license_file: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}/LICENSE.txt
+  summary: Snowflake Telemetry Python package
