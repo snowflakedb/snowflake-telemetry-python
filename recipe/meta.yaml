@@ -9,7 +9,7 @@ source:
   path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
 
 build:
-  number: {{ build_number }}
+  number: 0
   skip: True  # [py<38 or win32 or s390x]
   script: {{ PYTHON }} -m pip install . --no-deps -vvv
 
