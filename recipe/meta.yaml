@@ -1,5 +1,5 @@
 {% set name = "snowflake-telemetry-python" %}
-{% set version = "0.7.2.dev" %}
+{% set version = "0.7.5" %}
 
 package:
   name: {{ name|lower }}
