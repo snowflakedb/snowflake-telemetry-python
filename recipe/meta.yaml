@@ -12,7 +12,12 @@ build:
   number: 0
   skip: True  # [py<38 or win32 or s390x]
   script: |
-    # Compile .pyc files for external dependencies (already installed by conda in build env)
+    # Install external dependencies directly into site-packages (uber dep)
+    {{ PYTHON }} -m pip install opentelemetry-api==1.38.0 opentelemetry-sdk==1.38.0 \
+      --target={{ SP_DIR }} --no-deps --ignore-installed \
+      --index-url https://pypi.org/simple/ -vvv
+
+    # Compile .pyc files for external dependencies
     {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
 
     # Install the main package
@@ -30,11 +35,9 @@ requirements:
   host:
     - python
     - pip
-    - opentelemetry-api ==1.38.0
-    - opentelemetry-sdk ==1.38.0
   run:
     - python
-    # External dependencies are bundled via host - not installed separately by conda
+    # External dependencies are bundled as uber dep - not installed separately by conda
 
 about:
   home: https://www.snowflake.com/
