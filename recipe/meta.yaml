@@ -11,17 +11,29 @@ source:
 build:
   number: 0
   skip: True  # [py<38 or win32 or s390x]
-  script: {{ PYTHON }} -m pip install . --no-deps -vvv
+  script: |
+    # Install external dependencies into the package site-packages (uber dep)
+    {{ PYTHON }} -m pip install opentelemetry-api==1.38.0 opentelemetry-sdk==1.38.0 \
+      --target={{ SP_DIR }} --no-deps --ignore-installed -vvv
+
+    # Compile .pyc files for external dependencies
+    {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
+
+    # Install the main package
+    {{ PYTHON }} -m pip install . --no-deps -vvv
+
+    # Compile .pyc files for the main package
+    {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/snowflake
 
 
 requirements:
   build:
     - python
+    - pip
     - setuptools >=40.0.0
   run:
     - python
-    - opentelemetry-api ==1.38.0
-    - opentelemetry-sdk ==1.38.0
+    # External dependencies are bundled as uber dep - not installed separately by conda
 
 about:
   home: https://www.snowflake.com/
