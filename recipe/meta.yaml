@@ -12,11 +12,7 @@ build:
   number: 0
   skip: True  # [py<38 or win32 or s390x]
   script: |
-    # Install external dependencies into the package site-packages (uber dep)
-    {{ PYTHON }} -m pip install opentelemetry-api==1.35.0 opentelemetry-sdk==1.35.0 \
-      --target={{ SP_DIR }} --no-deps --ignore-installed -vvv
-
-    # Compile .pyc files for external dependencies
+    # Compile .pyc files for external dependencies (already installed by conda in build env)
     {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
 
     # Install the main package
@@ -31,6 +27,8 @@ requirements:
     - python
     - pip
     - setuptools >=40.0.0
+    - opentelemetry-api ==1.38.0
+    - opentelemetry-sdk ==1.38.0
   run:
     - python
     # External dependencies are bundled as uber dep - not installed separately by conda
