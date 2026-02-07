@@ -27,11 +27,14 @@ requirements:
     - python
     - pip
     - setuptools >=40.0.0
+  host:
+    - python
+    - pip
     - opentelemetry-api ==1.38.0
     - opentelemetry-sdk ==1.38.0
   run:
     - python
-    # External dependencies are bundled as uber dep - not installed separately by conda
+    # External dependencies are bundled via host - not installed separately by conda
 
 about:
   home: https://www.snowflake.com/
