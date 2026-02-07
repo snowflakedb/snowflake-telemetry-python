@@ -13,7 +13,7 @@ build:
   skip: True  # [py<38 or win32 or s390x]
   script: |
     # Install external dependencies into the package site-packages (uber dep)
-    {{ PYTHON }} -m pip install opentelemetry-api==1.38.0 opentelemetry-sdk==1.38.0 \
+    {{ PYTHON }} -m pip install opentelemetry-api==1.35.0 opentelemetry-sdk==1.35.0 \
       --target={{ SP_DIR }} --no-deps --ignore-installed -vvv
 
     # Compile .pyc files for external dependencies
