@@ -1,5 +1,7 @@
 {% set name = "snowflake-telemetry-python" %}
 {% set version = "0.7.5" %}
+{% set otel_version = "1.38.0" %}
+{% set otel_semconv_version = "0.59b0" %}
 
 package:
   name: {{ name|lower }}
@@ -12,10 +14,13 @@ build:
   number: 0
   skip: True  # [py<38 or win32 or s390x]
   script: |
-    # Install external dependencies directly into site-packages (uber dep)
-    {{ PYTHON }} -m pip install opentelemetry-api==1.38.0 opentelemetry-sdk==1.38.0 \
-      --target={{ SP_DIR }} --no-deps --ignore-installed \
-      --index-url https://pypi.org/simple/ -vvv
+    # Install external dependencies from local wheels (uber dep)
+    # Wheels must be pre-downloaded to recipe/wheels/ directory
+    {{ PYTHON }} -m pip install --find-links={{ SRC_DIR }}/recipe/wheels --no-index --no-deps --ignore-installed \
+      --target={{ SP_DIR }} \
+      opentelemetry-api=={{ otel_version }} \
+      opentelemetry-sdk=={{ otel_version }} \
+      opentelemetry-semantic-conventions=={{ otel_semconv_version }} -vvv
 
     # Compile .pyc files for external dependencies
     {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
