@@ -8,19 +8,26 @@ package:
   version: {{ version }}
 
 source:
-  path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
+  # Main package source
+  - path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
+  # External dependency wheels (downloaded before build script runs)
+  - url: https://files.pythonhosted.org/packages/ae/a2/d86e01c28300bd41bab8f18afd613676e2bd63515417b77636fc1add426f/opentelemetry_api-{{ otel_version }}-py3-none-any.whl
+    folder: wheels
+  - url: https://files.pythonhosted.org/packages/2f/2e/e93777a95d7d9c40d270a371392b6d6f1ff170c2a3cb32d6176741b5b723/opentelemetry_sdk-{{ otel_version }}-py3-none-any.whl
+    folder: wheels
+  - url: https://files.pythonhosted.org/packages/24/7d/c88d7b15ba8fe5c6b8f93be50fc11795e9fc05386c44afaf6b76fe191f9b/opentelemetry_semantic_conventions-{{ otel_semconv_version }}-py3-none-any.whl
+    folder: wheels
 
 build:
   number: 0
   skip: True  # [py<38 or win32 or s390x]
   script: |
-    # Install external dependencies from local wheels (uber dep)
-    # Wheels are in recipe/wheels/ directory
-    {{ PYTHON }} -m pip install --find-links=$RECIPE_DIR/wheels --no-index --no-deps --ignore-installed \
-      --target={{ SP_DIR }} \
-      opentelemetry-api=={{ otel_version }} \
-      opentelemetry-sdk=={{ otel_version }} \
-      opentelemetry-semantic-conventions=={{ otel_semconv_version }} -vvv
+    # Install external dependencies from downloaded wheels (uber dep)
+    {{ PYTHON }} -m pip install --no-deps --ignore-installed --target={{ SP_DIR }} \
+      $SRC_DIR/wheels/opentelemetry_api-{{ otel_version }}-py3-none-any.whl \
+      $SRC_DIR/wheels/opentelemetry_sdk-{{ otel_version }}-py3-none-any.whl \
+      $SRC_DIR/wheels/opentelemetry_semantic_conventions-{{ otel_semconv_version }}-py3-none-any.whl \
+      -vvv
 
     # Compile .pyc files for external dependencies
     {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
