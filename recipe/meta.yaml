@@ -1,43 +1,23 @@
 {% set name = "snowflake-telemetry-python" %}
 {% set version = "0.7.5" %}
 {% set otel_version = "1.38.0" %}
-{% set otel_semconv_version = "0.59b0" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  # Main package source
-  - path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
-  # External dependency wheels (downloaded before build script runs)
-  - url: https://files.pythonhosted.org/packages/ae/a2/d86e01c28300bd41bab8f18afd613676e2bd63515417b77636fc1add426f/opentelemetry_api-{{ otel_version }}-py3-none-any.whl
-    folder: wheels
-  - url: https://files.pythonhosted.org/packages/2f/2e/e93777a95d7d9c40d270a371392b6d6f1ff170c2a3cb32d6176741b5b723/opentelemetry_sdk-{{ otel_version }}-py3-none-any.whl
-    folder: wheels
-  - url: https://files.pythonhosted.org/packages/24/7d/c88d7b15ba8fe5c6b8f93be50fc11795e9fc05386c44afaf6b76fe191f9b/opentelemetry_semantic_conventions-{{ otel_semconv_version }}-py3-none-any.whl
-    folder: wheels
+  path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
 
 build:
   number: 0
   skip: True  # [py<38 or win32 or s390x]
   script: |
-    # Install external dependencies from downloaded wheels (uber dep)
-    {{ PYTHON }} -m pip install --no-deps --ignore-installed --target={{ SP_DIR }} \
-      $SRC_DIR/wheels/opentelemetry_api-{{ otel_version }}-py3-none-any.whl \
-      $SRC_DIR/wheels/opentelemetry_sdk-{{ otel_version }}-py3-none-any.whl \
-      $SRC_DIR/wheels/opentelemetry_semantic_conventions-{{ otel_semconv_version }}-py3-none-any.whl \
-      -vvv
-
-    # Compile .pyc files for external dependencies
-    {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
-
     # Install the main package
     {{ PYTHON }} -m pip install . --no-deps -vvv
 
     # Compile .pyc files for the main package
     {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/snowflake
-
 
 requirements:
   build:
@@ -49,7 +29,10 @@ requirements:
     - pip
   run:
     - python
-    # External dependencies are bundled as uber dep - not installed separately by conda
+    # Custom opentelemetry packages with .pyc files pre-compiled
+    # Build order: opentelemetry-api -> opentelemetry-semantic-conventions -> opentelemetry-sdk
+    - opentelemetry-api =={{ otel_version }}
+    - opentelemetry-sdk =={{ otel_version }}
 
 about:
   home: https://www.snowflake.com/
