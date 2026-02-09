@@ -15,8 +15,8 @@ build:
   skip: True  # [py<38 or win32 or s390x]
   script: |
     # Install external dependencies from local wheels (uber dep)
-    # Wheels must be pre-downloaded to recipe/wheels/ directory
-    {{ PYTHON }} -m pip install --find-links={{ SRC_DIR }}/recipe/wheels --no-index --no-deps --ignore-installed \
+    # Wheels are in recipe/wheels/ directory
+    {{ PYTHON }} -m pip install --find-links=$RECIPE_DIR/wheels --no-index --no-deps --ignore-installed \
       --target={{ SP_DIR }} \
       opentelemetry-api=={{ otel_version }} \
       opentelemetry-sdk=={{ otel_version }} \
