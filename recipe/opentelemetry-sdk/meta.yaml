@@ -1,18 +1,22 @@
 {% set name = "opentelemetry-sdk" %}
 {% set version = "1.38.0" %}
+{% set wheel_name = "opentelemetry_sdk-" ~ version ~ "-py3-none-any.whl" %}
 
 package:
   name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://files.pythonhosted.org/packages/2f/2e/e93777a95d7d9c40d270a371392b6d6f1ff170c2a3cb32d6176741b5b723/opentelemetry_sdk-{{ version }}-py3-none-any.whl
+  url: https://files.pythonhosted.org/packages/2f/2e/e93777a95d7d9c40d270a371392b6d6f1ff170c2a3cb32d6176741b5b723/{{ wheel_name }}
+  fn: {{ wheel_name }}
 
 build:
   number: 0
   noarch: python
   script: |
-    {{ PYTHON }} -m pip install *.whl --no-deps --target={{ SP_DIR }} -vvv
+    # Install from wheel file
+    {{ PYTHON }} -m pip install $SRC_DIR/{{ wheel_name }} --no-deps --target={{ SP_DIR }} -vvv
+    # Compile .pyc files
     {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
 
 requirements:
