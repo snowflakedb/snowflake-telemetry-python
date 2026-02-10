@@ -1,0 +1,36 @@
+{% set name = "opentelemetry-api" %}
+{% set version = "1.38.0" %}
+{% set wheel_name = "opentelemetry_api-" ~ version ~ "-py3-none-any.whl" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://files.pythonhosted.org/packages/ae/a2/d86e01c28300bd41bab8f18afd613676e2bd63515417b77636fc1add426f/{{ wheel_name }}
+  fn: {{ wheel_name }}
+
+build:
+  number: 0
+  script: |
+    # Install from wheel file (conda keeps .whl intact with fn: specified)
+    {{ PYTHON }} -m pip install $SRC_DIR/{{ wheel_name }} --no-deps --target={{ SP_DIR }} -vvv
+    # Compile .pyc files
+    {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
+
+requirements:
+  build:
+    - python
+    - pip
+  host:
+    - python
+    - pip
+  run:
+    - python >=3.8
+    - importlib-metadata >=6.0,<8.7.0
+    - deprecated >=1.2.6
+
+about:
+  home: https://opentelemetry.io/
+  license: Apache-2.0
+  summary: OpenTelemetry Python API (with .pyc files pre-compiled)

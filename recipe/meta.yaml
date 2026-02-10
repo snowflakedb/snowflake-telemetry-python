@@ -1,0 +1,41 @@
+{% set name = "snowflake-telemetry-python" %}
+{% set version = "0.7.5" %}
+{% set otel_version = "1.38.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
+
+build:
+  number: 0
+  skip: True  # [py<38 or win32 or s390x]
+  script: |
+    # Install the main package
+    {{ PYTHON }} -m pip install . --no-deps -vvv
+
+    # Compile .pyc files for the main package
+    {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/snowflake
+
+requirements:
+  build:
+    - python
+    - pip
+    - setuptools >=40.0.0
+  host:
+    - python
+    - pip
+  run:
+    - python
+    # Custom opentelemetry packages with .pyc files pre-compiled
+    # Build order: opentelemetry-api -> opentelemetry-semantic-conventions -> opentelemetry-sdk
+    - opentelemetry-api =={{ otel_version }}
+    - opentelemetry-sdk =={{ otel_version }}
+
+about:
+  home: https://www.snowflake.com/
+  license: Apache 2.0
+  license_file: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}/LICENSE.txt
+  summary: Snowflake Telemetry Python package

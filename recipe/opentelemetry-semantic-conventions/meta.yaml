@@ -1,0 +1,36 @@
+{% set name = "opentelemetry-semantic-conventions" %}
+{% set version = "0.59b0" %}
+{% set wheel_name = "opentelemetry_semantic_conventions-" ~ version ~ "-py3-none-any.whl" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://files.pythonhosted.org/packages/24/7d/c88d7b15ba8fe5c6b8f93be50fc11795e9fc05386c44afaf6b76fe191f9b/{{ wheel_name }}
+  fn: {{ wheel_name }}
+
+build:
+  number: 0
+  script: |
+    # Install from wheel file
+    {{ PYTHON }} -m pip install $SRC_DIR/{{ wheel_name }} --no-deps --target={{ SP_DIR }} -vvv
+    # Compile .pyc files
+    {{ PYTHON }} -m compileall -f -q {{ SP_DIR }}/opentelemetry
+
+requirements:
+  build:
+    - python
+    - pip
+  host:
+    - python
+    - pip
+  run:
+    - python >=3.8
+    - opentelemetry-api ==1.38.0
+    - deprecated >=1.2.6
+
+about:
+  home: https://opentelemetry.io/
+  license: Apache-2.0
+  summary: OpenTelemetry Semantic Conventions (with .pyc files pre-compiled)
