@@ -17,7 +17,7 @@ VERSION = None
 with open(os.path.join(SNOWFLAKE_TELEMETRY_SRC_DIR, "version.py"), encoding="utf-8") as f:
     exec(f.read())
 
-REQUIRED_PYTHON_VERSION = ">=3.9, <3.14"
+REQUIRED_PYTHON_VERSION = ">=3.9, <3.15"
 
 
 setup(
@@ -30,8 +30,8 @@ setup(
     long_description=LONG_DESCRIPTION,
     python_requires=REQUIRED_PYTHON_VERSION,
     install_requires=[
-        "opentelemetry-api == 1.35.0",
-        "opentelemetry-sdk == 1.35.0",
+        "opentelemetry-api == 1.38.0",
+        "opentelemetry-sdk == 1.38.0",
     ],
     packages=find_namespace_packages(
         where='src'
@@ -57,6 +57,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Database",
         "Topic :: Software Development",
         "Topic :: Software Development :: Libraries",

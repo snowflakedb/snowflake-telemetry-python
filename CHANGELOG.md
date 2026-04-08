@@ -1,5 +1,10 @@
 # Release History
 
+## 0.8.0 (2026-03-31)
+
+* Added support for Python 3.14
+* Upgrade OpenTelemetry Python dependencies to version 1.38.0
+
 ## 0.7.1 (2025-07-16)
 
 * Adds missing `scope` field to the `SnowflakeLogFormatter`.
