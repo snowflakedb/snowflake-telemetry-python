@@ -1,0 +1,23 @@
+apiVersion: snowflake.com/security/v1alpha1
+kind: SecurityContext
+metadata:
+  name: snowflake-telemetry-python
+  annotations:
+    owner: "@snowflakedb/telemetry"
+spec:
+  jira_area: "Data Platform: Data Pipelines"
+  jira_component: "DP - Telemetry"
+  product_owner: "joe.witt@snowflake.com"
+  documents:
+    - path: architecture.md
+      kind: context
+      description: "Package layout of this OTel-extension library and why nothing in it is internet-facing"
+    - path: trust-boundaries.md
+      kind: context
+      description: "Why this is a same-process library (no auth boundary), that it performs no network/file I/O itself, and the one caller-input guard it does enforce (log-formatter reserved attributes)"
+    - path: threat-model.md
+      kind: threat-model
+      description: "Systems this package's own code and build scripts talk to, and the invariants (log-attribute protection, vendored/generated-code sync, publish-token scoping) with their controls and status"
+    - path: secure-coding.md
+      kind: secure-coding
+      description: "The adopted convention for vendoring or regenerating code from an upstream OpenTelemetry repository"
