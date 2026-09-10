@@ -4,6 +4,10 @@
 
 name: Check OTLP Proto Common Vendored Code
 
+# All action refs (uses:) in this repository must be pinned to full commit
+# SHAs, never mutable tags or branches, so CI and release runs are
+# reproducible. tests/test_workflow_action_pinning.py enforces this in CI.
+
 on:
   push:
     branches: [ "main" ]
@@ -22,7 +26,7 @@ jobs:
   check-codegen:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
     - name: Run vendor script
       run: |
         rm -rf src/snowflake/telemetry/_internal/opentelemetry/exporter/
