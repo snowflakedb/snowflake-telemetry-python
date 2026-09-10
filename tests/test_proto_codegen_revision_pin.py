@@ -96,5 +96,77 @@ class TestProtoCodegenRevisionPin(unittest.TestCase):
             self.assertIn("full commit hash", result.stderr)
 
 
+class TestGenerateMarshalerCode(unittest.TestCase):
+    def _generate_argv(self, proto_dir, repo_root):
+        # Run generate_marshaler_code with a stubbed protoc and return the
+        # argv it received (one element per line).
+        with tempfile.TemporaryDirectory() as work:
+            argv_file = os.path.join(work, "argv")
+            stub = os.path.join(work, "protoc-stub")
+            with open(stub, "w") as stub_file:
+                stub_file.write('#!/bin/bash\nprintf \'%s\\n\' "$@" > "$ARGV_CAPTURE"\n')
+            os.chmod(stub, 0o755)
+            env = dict(os.environ)
+            env["PROTOC"] = stub
+            env["ARGV_CAPTURE"] = argv_file
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    'source "$1" && generate_marshaler_code "$2" "$3"',
+                    "generate-marshaler-code",
+                    CODEGEN_LIB,
+                    proto_dir,
+                    repo_root,
+                ],
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with open(argv_file) as captured:
+                return captured.read().splitlines()
+
+    def test_filenames_with_spaces_pass_as_single_argument(self):
+        with tempfile.TemporaryDirectory() as proto_dir, tempfile.TemporaryDirectory() as repo_root:
+            spaced_dir = os.path.join(proto_dir, "dir with spaces")
+            os.makedirs(spaced_dir)
+            proto_file = os.path.join(spaced_dir, "file.proto")
+            open(proto_file, "w").close()
+
+            argv = self._generate_argv(proto_dir, repo_root)
+
+            self.assertEqual(argv[0], "-I")
+            self.assertEqual(argv[1], proto_dir)
+            self.assertEqual(
+                argv[2],
+                "--plugin=protoc-gen-custom-plugin=%s"
+                % os.path.join(repo_root, "scripts", "plugin.py"),
+            )
+            self.assertEqual(argv[3], "--custom-plugin_out=.")
+            self.assertEqual(argv[4:], [proto_file])
+
+    def test_no_extra_protoc_options_from_filenames(self):
+        with tempfile.TemporaryDirectory() as proto_dir, tempfile.TemporaryDirectory() as repo_root:
+            option_like_dir = os.path.join(
+                proto_dir, "x --plugin=protoc-gen-custom-plugin=other"
+            )
+            os.makedirs(option_like_dir)
+            proto_file = os.path.join(option_like_dir, "y.proto")
+            open(proto_file, "w").close()
+
+            argv = self._generate_argv(proto_dir, repo_root)
+
+            plugin_options = [arg for arg in argv if arg.startswith("--plugin=")]
+            self.assertEqual(
+                plugin_options,
+                [
+                    "--plugin=protoc-gen-custom-plugin=%s"
+                    % os.path.join(repo_root, "scripts", "plugin.py")
+                ],
+            )
+            self.assertIn(proto_file, argv)
+
+
 if __name__ == "__main__":
     unittest.main()
