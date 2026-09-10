@@ -18,6 +18,36 @@
 # source .venv/bin/activate
 # # cd into the snowflake-telemetry-python git root dir
 # export SNOWFLAKE_TELEMETRY_DIR=$(pwd)
+#
+# For local test builds only, the workspace hygiene and PATH safety checks can
+# be bypassed with:
+# export SNOWFLAKE_TELEMETRY_ALLOW_DIRTY_WORKSPACE=1
+# export SNOWFLAKE_TELEMETRY_ALLOW_UNSAFE_PATH=1
+# Never set these in the Jenkins release job.
+
+# Resolve the repo root with shell builtins only, so no external command runs
+# via the ambient PATH before assert_secure_path has validated it.
+case "${BASH_SOURCE[0]}" in
+  */*) _script_dir="${BASH_SOURCE[0]%/*}" ;;
+  *)   _script_dir="." ;;
+esac
+REPO_ROOT="$(cd "$_script_dir" && pwd)"
+unset _script_dir
+source "${REPO_ROOT}/scripts/release_lib.sh"
+
+# This gate must run before anything that resolves commands through the
+# ambient PATH, so release builds only use tools from directories that are
+# not writable by other users.
+assert_secure_path || exit 1
+
+# Remove our own previous build outputs so they do not trip the hygiene gate.
+rm -rf ./dist ./build venv_* src/*.egg-info
+
+# Refuse to build unless the checkout is pristine (no modified, untracked, or
+# ignored files), so release artifacts contain only committed sources. The
+# explicit exit keeps this guard effective even if the script is invoked as
+# `bash pypi-build.sh` without -e.
+assert_clean_workspace "${REPO_ROOT}" || exit 1
 
 VENV_DIR=venv_$(date +%s)
 python3 -m venv ${VENV_DIR}
@@ -34,6 +64,10 @@ mkdir ./dist
 # set default build number to 0, if SNOWFLAKE_TELEMETRY_BUILD_NUMBER is not set
 echo "Start building snowflake-telemetry-python package with build_number: ${SNOWFLAKE_TELEMETRY_BUILD_NUMBER:=0}"
 SNOWFLAKE_TELEMETRY_BUILD_NUMBER=${SNOWFLAKE_TELEMETRY_BUILD_NUMBER:=0} python3 -m build
+
+# Bind the build outputs to SHA-256 digests so downstream release steps can
+# verify that what gets published is what this build produced.
+write_sha256_manifest ./dist || exit 1
 
 deactivate
 rm -rf ${VENV_DIR}

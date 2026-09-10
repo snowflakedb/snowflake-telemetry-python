@@ -3,6 +3,9 @@ package:
     version: "0.8.0"
 
 source:
+    # The source is the local checkout pointed at by SNOWFLAKE_TELEMETRY_DIR.
+    # Official release builds go through build.sh, which refuses to run
+    # unless the checkout is pristine.
     path: {{ environ.get('SNOWFLAKE_TELEMETRY_DIR') }}
 
 build:
