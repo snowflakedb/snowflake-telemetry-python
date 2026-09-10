@@ -19,12 +19,26 @@
 # # cd into the snowflake-telemetry-python git root dir
 # export SNOWFLAKE_TELEMETRY_DIR=$(pwd)
 #
-# For local test builds only, the workspace hygiene check can be bypassed with:
+# For local test builds only, the workspace hygiene and PATH safety checks can
+# be bypassed with:
 # export SNOWFLAKE_TELEMETRY_ALLOW_DIRTY_WORKSPACE=1
-# Never set this in the Jenkins release job.
+# export SNOWFLAKE_TELEMETRY_ALLOW_UNSAFE_PATH=1
+# Never set these in the Jenkins release job.
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve the repo root with shell builtins only, so no external command runs
+# via the ambient PATH before assert_secure_path has validated it.
+case "${BASH_SOURCE[0]}" in
+  */*) _script_dir="${BASH_SOURCE[0]%/*}" ;;
+  *)   _script_dir="." ;;
+esac
+REPO_ROOT="$(cd "$_script_dir" && pwd)"
+unset _script_dir
 source "${REPO_ROOT}/scripts/release_lib.sh"
+
+# This gate must run before anything that resolves commands through the
+# ambient PATH, so release builds only use tools from directories that are
+# not writable by other users.
+assert_secure_path || exit 1
 
 # Remove our own previous build outputs so they do not trip the hygiene gate.
 rm -rf ./dist ./build venv_* src/*.egg-info

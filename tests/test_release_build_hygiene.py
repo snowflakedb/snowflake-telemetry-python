@@ -48,6 +48,25 @@ def _write_sha256_manifest(dist_dir):
     )
 
 
+def _assert_secure_path(path_value, extra_env=None):
+    env = dict(os.environ)
+    if extra_env:
+        env.update(extra_env)
+    return subprocess.run(
+        [
+            "bash",
+            "-c",
+            'source "$1" && assert_secure_path "$2"',
+            "assert-secure-path",
+            RELEASE_LIB,
+            path_value,
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
 class TestCleanWorkspaceGate(unittest.TestCase):
     def _git(self, repo, *args, check=True):
         return subprocess.run(
@@ -159,6 +178,80 @@ class TestCleanWorkspaceGate(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
 
 
+class TestSecurePath(unittest.TestCase):
+    """Tests for the PATH safety gate."""
+
+    def _safe_dir(self, base, name="safe", mode=0o755):
+        path = os.path.join(base, name)
+        os.makedirs(path)
+        os.chmod(path, mode)
+        return path
+
+    def test_safe_path_passes(self):
+        with tempfile.TemporaryDirectory() as base:
+            safe = self._safe_dir(base)
+            result = _assert_secure_path("%s:/usr/bin:/bin" % safe)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_symlinked_entry_passes(self):
+        with tempfile.TemporaryDirectory() as base:
+            safe = self._safe_dir(base)
+            link = os.path.join(base, "link")
+            os.symlink(safe, link)
+            result = _assert_secure_path("%s:/usr/bin:/bin" % link)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_world_writable_dir_fails(self):
+        with tempfile.TemporaryDirectory() as base:
+            writable = self._safe_dir(base, name="writable", mode=0o777)
+            result = _assert_secure_path("%s:/usr/bin:/bin" % writable)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("writable by group or others", result.stderr)
+            self.assertIn("writable", result.stderr)
+
+    def test_group_writable_dir_fails(self):
+        with tempfile.TemporaryDirectory() as base:
+            writable = self._safe_dir(base, name="group-writable", mode=0o775)
+            result = _assert_secure_path("%s:/usr/bin:/bin" % writable)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("group-writable", result.stderr)
+
+    def test_writable_parent_fails(self):
+        with tempfile.TemporaryDirectory() as base:
+            parent = self._safe_dir(base, name="parent", mode=0o777)
+            child = self._safe_dir(parent, name="child", mode=0o755)
+            result = _assert_secure_path("%s:/usr/bin:/bin" % child)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("parent", result.stderr)
+
+    def test_relative_entry_fails(self):
+        result = _assert_secure_path("relative/bin:/usr/bin:/bin")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("relative PATH entry", result.stderr)
+
+    def test_empty_entry_fails(self):
+        with tempfile.TemporaryDirectory() as base:
+            safe = self._safe_dir(base)
+            result = _assert_secure_path("%s::/usr/bin:/bin" % safe)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("empty entry", result.stderr)
+
+    def test_nonexistent_entry_fails(self):
+        result = _assert_secure_path("/definitely/not/a/real/dir:/usr/bin:/bin")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("does not exist", result.stderr)
+
+    def test_opt_out_env_var_bypasses_with_warning(self):
+        with tempfile.TemporaryDirectory() as base:
+            writable = self._safe_dir(base, name="writable", mode=0o777)
+            result = _assert_secure_path(
+                "%s:/usr/bin:/bin" % writable,
+                extra_env={"SNOWFLAKE_TELEMETRY_ALLOW_UNSAFE_PATH": "1"},
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("WARNING", result.stderr)
+
+
 class TestReleaseScriptsEnforceHygiene(unittest.TestCase):
     def test_build_sh_gates_on_clean_workspace(self):
         with open(BUILD_SH) as build_script:
@@ -190,6 +283,40 @@ class TestReleaseScriptsEnforceHygiene(unittest.TestCase):
         with open(CONDA_BUILD_SH) as build_script:
             script = build_script.read()
         self.assertIn("${PYTHON} -I setup.py", script)
+
+    def test_build_sh_gates_on_secure_path(self):
+        with open(BUILD_SH) as build_script:
+            script = build_script.read()
+        self.assertIn("assert_secure_path || exit 1", script)
+
+    def test_pypi_build_sh_gates_on_secure_path(self):
+        with open(PYPI_BUILD_SH) as build_script:
+            script = build_script.read()
+        self.assertIn("assert_secure_path || exit 1", script)
+
+    def _assert_path_gate_runs_first(self, script_path):
+        # The PATH gate must run before the workspace gate (and before any
+        # other bare command), so no PATH-resolved tool runs before the PATH
+        # check.
+        with open(script_path) as build_script:
+            script = build_script.read()
+        self.assertLess(
+            script.index("assert_secure_path || exit 1"),
+            script.index('assert_clean_workspace "${REPO_ROOT}" || exit 1'),
+        )
+        # REPO_ROOT must be resolved with shell builtins only: dirname is
+        # PATH-resolved and would run before the gate.
+        repo_root_lines = [
+            line for line in script.splitlines() if line.startswith("REPO_ROOT=")
+        ]
+        self.assertEqual(len(repo_root_lines), 1)
+        self.assertNotIn("dirname", repo_root_lines[0])
+
+    def test_build_sh_checks_path_before_workspace(self):
+        self._assert_path_gate_runs_first(BUILD_SH)
+
+    def test_pypi_build_sh_checks_path_before_workspace(self):
+        self._assert_path_gate_runs_first(PYPI_BUILD_SH)
 
 
 class TestSha256Manifest(unittest.TestCase):
@@ -245,11 +372,18 @@ class TestBuildScriptsEndToEnd(unittest.TestCase):
             self._make_repo(repo, "build.sh")
             with open(os.path.join(repo, "setuptools.py"), "w") as shadow:
                 shadow.write("# uncommitted file\n")
+            # Bypass the PATH gate (which runs first): the ambient PATH on a
+            # dev machine legitimately contains entries it rejects, and this
+            # test targets the workspace gate. PATH gate behavior is covered
+            # by TestSecurePath.
+            env = dict(os.environ)
+            env["SNOWFLAKE_TELEMETRY_ALLOW_UNSAFE_PATH"] = "1"
             result = subprocess.run(
                 ["bash", "build.sh"],
                 cwd=repo,
                 capture_output=True,
                 text=True,
+                env=env,
             )
             output = result.stdout + result.stderr
             self.assertNotEqual(result.returncode, 0)
@@ -275,6 +409,12 @@ class TestBuildScriptsEndToEnd(unittest.TestCase):
             os.chmod(stub, stat.S_IRWXU)
             env = dict(os.environ)
             env["PATH"] = stub_bin + os.pathsep + env["PATH"]
+            # The ambient PATH on a dev machine legitimately contains entries
+            # the PATH gate rejects (stale dirs, wrapper shims); that gate's
+            # behavior is covered by TestSecurePath. This end-to-end test
+            # verifies the script wiring (workspace gate -> build -> digest
+            # manifest), so bypass the PATH gate here.
+            env["SNOWFLAKE_TELEMETRY_ALLOW_UNSAFE_PATH"] = "1"
             result = subprocess.run(
                 ["bash", "build.sh"],
                 cwd=repo,
@@ -294,11 +434,18 @@ class TestBuildScriptsEndToEnd(unittest.TestCase):
             self._make_repo(repo, "pypi-build.sh")
             with open(os.path.join(repo, "setuptools.py"), "w") as shadow:
                 shadow.write("# uncommitted file\n")
+            # Bypass the PATH gate (which runs first): the ambient PATH on a
+            # dev machine legitimately contains entries it rejects, and this
+            # test targets the workspace gate. PATH gate behavior is covered
+            # by TestSecurePath.
+            env = dict(os.environ)
+            env["SNOWFLAKE_TELEMETRY_ALLOW_UNSAFE_PATH"] = "1"
             result = subprocess.run(
                 ["bash", "pypi-build.sh"],
                 cwd=repo,
                 capture_output=True,
                 text=True,
+                env=env,
             )
             output = result.stdout + result.stderr
             self.assertNotEqual(result.returncode, 0)
