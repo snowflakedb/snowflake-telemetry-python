@@ -40,7 +40,7 @@ pip install . ./tests/snowflake-telemetry-test-utils
 
 To regenerate the code under `src/snowflake/_internal/opentelemetry/proto/`, execute the script `./scripts/proto_codegen.sh`. The script expects the `src/snowflake/_internal/opentelemetry/proto/` directory to exist, and will delete all .py files in it before regerating the code.
 
-The commit/branch/tag of [opentelemetry-proto](https://github.com/open-telemetry/opentelemetry-proto) that the code is generated from is pinned to PROTO_REPO_BRANCH_OR_COMMIT, which can be configured in the script. It is currently pinned to the same tag as [opentelemetry-python](https://github.com/open-telemetry/opentelemetry-python/blob/main/scripts/proto_codegen.sh#L15).
+The [opentelemetry-proto](https://github.com/open-telemetry/opentelemetry-proto) source used for code generation is pinned to the immutable commit in `PROTO_REPO_COMMIT`. The current commit corresponds to the `v1.7.0` release used by [opentelemetry-python](https://github.com/open-telemetry/opentelemetry-python/blob/main/scripts/proto_codegen.sh#L15). When updating the proto version, update the full commit hash rather than using a movable branch or tag.
 
 
 ### Release
