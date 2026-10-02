@@ -3,11 +3,8 @@ kind: SecurityContext
 metadata:
   name: snowflake-telemetry-python
   annotations:
-    owner: "triage-observability-external-dl@snowflake.com"
+    owner: "@snowflakedb/telemetry"
 spec:
-  jira_area: "PIE - Observability"
-  jira_component: "Observability - External Observability"
-  product_owner: "shangcheng.ying@snowflake.com"
   documents:
     - path: architecture.md
       kind: context
