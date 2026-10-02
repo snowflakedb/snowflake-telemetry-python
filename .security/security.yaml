@@ -5,9 +5,9 @@ metadata:
   annotations:
     owner: "@snowflakedb/telemetry"
 spec:
-  jira_area: "Data Platform: Data Pipelines"
-  jira_component: "DP - Telemetry"
-  product_owner: "joe.witt@snowflake.com"
+  jira_area: "PIE - Observability"
+  jira_component: "Observability - External Observability"
+  product_owner: "shangcheng.ying@snowflake.com"
   documents:
     - path: architecture.md
       kind: context
